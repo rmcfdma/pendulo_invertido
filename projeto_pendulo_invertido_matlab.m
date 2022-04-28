@@ -86,7 +86,6 @@ tempo_simulacao = 10;
 
 %% 14 - Matriz de transição para o sistema linearizado
 
-% Pelo ZOH. Mapeia corretamente do plano s para o plano z.
 % F = expm(A*dt);
 % G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B;
 
