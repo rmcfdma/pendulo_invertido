@@ -3,11 +3,6 @@ close all;
 clear all;
 clc;
 
-%% Senha e usuário github
-
-% senha: clarineta6641
-% usuario: rmcfdma
-
 %% 2 - Definição da Variáveis
 syms x1 x2 x3 x4 u l M m g J dt
 x = [x1 x2 x3 x4];           
