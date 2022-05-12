@@ -12,13 +12,13 @@ function plotar_sistema(t1,x1,y1,u1,t2,x2,y2,u2,e,p,w,legenda1,legenda2)
 % legenda -> Legenda do(s) sistema(s)
 % w  -> Espessura da linha do gráfico
 
-dois = 0;
-filtragem = 0;
+dois = 0;             % Inicializa a quantidade de sistemas a serem plotados
+filtragem = 0;        % Inicializa o indicador de filtragem
 
-if length(x2) ~= 0
+if length(x2) ~= 0    % Se existir um segundo sistema
     dois = 1;
 end
-if length(e) ~= 0 & length(p) ~= 0
+if length(e) ~= 0 & length(p) ~= 0 % Se existir um filtro
     filtragem = 1;
 end    
 
@@ -31,24 +31,22 @@ end
  nexttile;
  plot(t1,y1(1,:)','LineWidth',w);        % Plot da posição do carrinho do sistema 1 
  if dois
-     hold on;           % Retém o gráfico
+     hold on;                            % Retém o gráfico
      plot(t2,y2(1,:)','LineWidth',w);    % Plot da posição do carrinho do sistema 2
-     legend(legenda1,legenda2)   % Legenda para dois sistemas
+     legend(legenda1,legenda2)           % Legenda para dois sistemas
  end
  title('Posição do Carrinho vs. Tempo')  % Título do gráfico   
  xlabel('Tempo - s')                     % Texto do eixo x
  ylabel('Posição do carrinho - m')       % Texto do eixo y
  grid on;                                % Habilita a grade
-%  if dois
-%      hold off;                           % Retém o gráfico
-%  else
+
  
  nexttile;
  plot(t1,(180/pi)*y1(2,:)','LineWidth',w);        % Plot do ângulo da haste do sistema 1
  if dois
      hold on;                                     % Retém o gráfico
      plot(t2,(180/pi)*y2(2,:)','LineWidth',w);    % Plot do ângulo da haste do sistema 2
-     legend(legenda1,legenda2);           % Legenda do gráfico
+     legend(legenda1,legenda2);                   % Legenda do gráfico
  end
  title('Ângulo da Haste x Tempo')  % Título do gráfico
  xlabel('Tempo - s')               % Texto do eixo x
@@ -75,15 +73,15 @@ end
  else
      legend('Velocidade Linear do Carrinho','Velocidade Angular da Haste'); % Legenda do gráfico
  end
- title('Gráfico das Velocidades Linear e Angular x Tempo')  % Título do gráfico   
- xlabel('Tempo - s'); % Texto do eixo x
+ title('Velocidades Linear e Angular x Tempo')  % Título do gráfico   
+ xlabel('Tempo - s');                           % Texto do eixo x
  ylabel('Vel. do Carrinho m/s - Vel. da Haste rad/s') % Texto do eixo y
- grid on;   % Habilita a grade
- hold off;  % Libera o gráfico
+ grid on;                                       % Habilita a grade
+ hold off;                                      % Libera o gráfico
  
  nexttile;
- plot(t1,u1','LineWidth',w);          % Plot do sinal de controle 
- title('Sinal de Controle vs. Tempo') % Título do gráfico
+ plot(t1,u1','LineWidth',w);                    % Plot do sinal de controle 
+ title('Sinal de Controle vs. Tempo')           % Título do gráfico
  if dois & length(u2) ~= 0
      hold on;
      plot(t2,u2','LineWidth',w); % Plot do sinal de controle 
@@ -103,15 +101,12 @@ end
      grid on;  
      
      nexttile;
-     plot(t1,e','LineWidth',w);   % Plot do ângulo da haste do sistema 1  
+     plot(t1,e','LineWidth',w);             % Plot do ângulo da haste do sistema 1  
      title('Erro de Estimativa entre as Saídas vs. Tempo') % Título do gráfico
      legend('Posição do Carrinho','Ângulo da Haste')       % Legenda do gráfico
      xlabel('Tempo - s')                    % Texto do eixo x
      ylabel('Erro de Estimativa vs. Tempo') % Texto do eixo y
-     grid on;  
-     
+     grid on;      
  end
- 
-
 end
 
