@@ -48,7 +48,7 @@ end
      plot(t2,(180/pi)*y2(2,:)','LineWidth',w);    % Plot do ângulo da haste do sistema 2
      legend(legenda1,legenda2);                   % Legenda do gráfico
  end
- title('Ângulo da Haste x Tempo')  % Título do gráfico
+ title('Ângulo da Haste vs. Tempo')  % Título do gráfico
  xlabel('Tempo - s')               % Texto do eixo x
  ylabel('Posição da Haste - º')    % Texto do eixo y
  grid on;                          % Habilita a grade
@@ -73,7 +73,7 @@ end
  else
      legend('Velocidade Linear do Carrinho','Velocidade Angular da Haste'); % Legenda do gráfico
  end
- title('Velocidades Linear e Angular x Tempo')  % Título do gráfico   
+ title('Velocidades Linear e Angular  vs. Tempo')  % Título do gráfico   
  xlabel('Tempo - s');                           % Texto do eixo x
  ylabel('Vel. do Carrinho m/s - Vel. da Haste rad/s') % Texto do eixo y
  grid on;                                       % Habilita a grade
