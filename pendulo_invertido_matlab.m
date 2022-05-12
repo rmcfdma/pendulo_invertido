@@ -376,7 +376,44 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % plotar_sistema(t,X,Y,U,[],[],[],[],[],[],2,'',''); % Plot do sistema
 % animar_pendulo(Y',[],2,l,l_carrinho,h_carrinho,'Sistema linearizado com controle LQR e sem ruido.',''); % Animação
 
-%% 35 - Sistema linearizado com controle LQR e com ruido aditivo no sistema.
+%% 35 - Simulação dos sistemas linearizados pelo algoritmo recursivo e via rotinas do Matlab em conjunto.
+% for i = 0:dt:tempo_simulacao
+%     u = -K*x;                    % Lei de controle 
+%     x = x + (A*x + B*u)*dt;      % x[n+1] = (Ax[n] + Bu[n])*dt
+%     y = C*x;                     % Medição
+%     X = [X x];                   % Acumulando o estado
+%     Y = [Y y];                   % Acumulando a saída
+%     U = [U u];                   % Acumulando o sinal de controle
+%     t = [t i];                   % Acumulando o tempo
+% end
+% 
+% tf = tempo_simulacao;            % Tempo final
+% sys = ss(A-B*K,B,C,D);           % Sistema em malha fechada linearizado
+% [Y2,t2,X2] = initial(sys,ci,tf); % Simula o sistema linearizado
+% U2 = -K*X2';                     % Sinal de controle
+% % plotar_sistema(t,X,Y,U,t2',X2',Y2',U2',[],[],2,'Via algoritmo recursivo','Via rotinas do Matilab'); % Plot do sistema
+% animar_pendulo(Y',Y2,2,l,l_carrinho,h_carrinho,'Via algoritmo recursivo.','Via rotinas do Matilab.'); % Animação
+
+%% 36 - Simulação dos sistemas não-lineares pelo algoritmo recursivo e via rotinas do Matlab em conjunto.
+% for i = 0:dt:tempo_simulacao
+%     u = -K*x;                            % Lei de controle
+%     x = x + f_h(u,x(2),x(3),x(4))*dt;    % x[n+1] =  x[n]+f(x[n],u[n])*dt com ruído w
+%     y = h_h(x(1),x(3));                  % Medição com ruído v
+%     X = [X x];                           % Acumulando o estado
+%     Y = [Y y];                           % Acumulando a saída
+%     U = [U u];                           % Acumulando o sinal de controle
+%     t = [t i];                           % Acumulando o tempo
+% end
+% 
+% t0 = 0;                        % Tempo inicial
+% tf = tempo_simulacao;          % Tempo final
+% opts = odeset('RelTol',1e-5);  % Erro relativo
+% [t2,X2] = ode45(@equacoes_nao_lineares,[t0 tf],ci,opts,K); % Ou -> ode45(@(t,x)equacoes_nao_lineares_lqr(t,x,K),[to tf],ci,opts);
+% U2 = -K*X2';                   % Sinal de controle
+% plotar_sistema(t,X,Y,U,t2',X2',X2(:,[1 3])',U2',[],[],2,'Via algoritmo recursivo','Via rotinas do Matilab'); % Plot do sistema
+% animar_pendulo(Y',X2(:,[1 3]),2,l,l_carrinho,h_carrinho,'Via algoritmo recursivo.','Via rotinas do Matilab.'); % Animação
+
+%% 37 - Sistema linearizado com controle LQR e com ruido aditivo no sistema.
 % for i = 0:dt:tempo_simulacao
 %     u = -K*x;                          % Lei de controle 
 %     x = x + (A*x + B*u + w)*dt;        % x[n+1] = (Ax[n] + Bu[n] + w)*dt 
@@ -391,7 +428,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % plotar_sistema(t,X,Y,U,[],[],[],[],[],[],2,'',''); % Plot do sistema
 % animar_pendulo(Y',[],2,l,l_carrinho,h_carrinho,'Sistema linearizado com controle LQR e com ruido aditivo no sistema.',''); % Animação
 
-%% 36 - Sistema linearizado com controle LQR e com ruido no sistema e no sensor.
+%% 38 - Sistema linearizado com controle LQR e com ruido no sistema e no sensor.
 % for i = 0:dt:tempo_simulacao
 %     u = -K*x;                          % Lei de controle
 %     x = x + (A*x + B*u + w)*dt;        % x[n+1] = (Ax[n] + Bu[n] + w)*dt 
@@ -406,7 +443,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % plotar_sistema(t,X,Y,U,[],[],[],[],[],[],2,'',''); % Plot do sistema
 % animar_pendulo(Y',[],2,l,l_carrinho,h_carrinho,'Sistema linearizado com controle LQR e com ruido no sistema e no sensor.',''); % Animação
 
-%% 37 - Sistemas Não-Linear e Linearizado com LQR e sem ruídos simulados juntos. 
+%% 39 - Sistemas Não-Linear e Linearizado com LQR e sem ruídos simulados juntos. 
 % for i = 0:dt:tempo_simulacao
 %     u = -K*x;                               % Lei de controle
 %     u2 = -K*x2;                             % Lei de controle
@@ -425,7 +462,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % % plotar_sistema(t,X,Y,U,t,X2,Y2,U2,[],[],2,'Linearizado','Não-Linear'); % Plot do sistema
 % animar_pendulo(Y',Y2',2,l,l_carrinho,h_carrinho,'Linearizado','Não-Linear'); % Animação
 
-%% 38 - KF - Filtro de Kalman seguindo o sistema linearizado sem ruido.
+%% 40 - KF - Filtro de Kalman seguindo o sistema linearizado sem ruido.
 % F = expm(A*dt);                    % Matriz de transição estados
 % G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
 % 
@@ -460,7 +497,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 39 - KF - Filtro de Kalman seguindo o sistema linearizado com ruido no sistema.
+%% 41 - KF - Filtro de Kalman seguindo o sistema linearizado com ruido no sistema.
 % F = expm(A*dt);                    % Matriz de transição estados
 % G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
 % 
@@ -497,7 +534,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 40 - KF - Filtro de Kalman seguindo o sistema linearizado com ruido no sistema e no sensor.
+%% 42 - KF - Filtro de Kalman seguindo o sistema linearizado com ruido no sistema e no sensor.
 % F = expm(A*dt);                        % Matriz de transição estados
 % G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
 % 
@@ -534,7 +571,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 41 - LQG (Filtro de Kalman + LQR) sem ruído.
+%% 43 - LQG (Filtro de Kalman + LQR) sem ruído.
 % F = expm(A*dt);                        % Matriz de transição estados
 % G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
 % 
@@ -569,7 +606,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 42 - LQG (Filtro de Kalman + LQR) com ruído no sistema.
+%% 44 - LQG (Filtro de Kalman + LQR) com ruído no sistema.
 % F = expm(A*dt);                        % Matriz de transição estados
 % G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
 % 
@@ -606,7 +643,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 43 - LQG (Filtro de Kalman + LQR) com ruído no sistema e nos sensores.
+%% 45 - LQG (Filtro de Kalman + LQR) com ruído no sistema e nos sensores.
 % F = expm(A*dt);                                         % Matriz de transição estados
 % G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
 % 
@@ -643,7 +680,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 44 - EKF (Filtro de Kalman Estendido) sem ruídos.
+%% 46 - EKF (Filtro de Kalman Estendido) sem ruídos.
 % F = F_j;  % Matriz de Transiçãp de estados
 % f = f_h;  % Equações de estados não-lineares
 
@@ -678,7 +715,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 45 - EKF (Filtro de Kalman Estendido) com ruído aditivo no sistema.
+%% 47 - EKF (Filtro de Kalman Estendido) com ruído aditivo no sistema.
 % F = F_j;  % Matriz de Transição de estados
 % f = f_h;  % Equações de estados não-lineares
 
@@ -715,7 +752,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 46 - EKF (Filtro de Kalman Estendido) com ruidos aditivos no sistema e nos sensores.
+%% 48 - EKF (Filtro de Kalman Estendido) com ruidos aditivos no sistema e nos sensores.
 % F = F_j;  % Matriz de Transição de estados
 % f = f_h;  % Equações de estados não-lineares
 
@@ -752,7 +789,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 47 - EKF (Filtro de Kalman Estendido) com LQR sem ruídos. 
+%% 49 - EKF (Filtro de Kalman Estendido) com LQR sem ruídos. 
 % F = F_j;  % Matriz de Transição de estados
 % f = f_h;  % Equações de estados não-lineares
 
@@ -787,7 +824,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 48 - EKF (Filtro de Kalman Estendido) com LQR e com ruído no sistema.
+%% 50 - EKF (Filtro de Kalman Estendido) com LQR e com ruído no sistema.
 % F = F_j;  % Matriz de Transição de estados
 % f = f_h;  % Equações de estados não-lineares
 % 
@@ -824,7 +861,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 49 - EKF (Filtro de Kalman Estendido) com LQR e ruídos no sistema e no sensor.
+%% 51 - EKF (Filtro de Kalman Estendido) com LQR e ruídos no sistema e no sensor.
 % F = F_j;  % Matriz de Transição de estados
 % f = f_h;  % Equações de estados não-lineares
 % for i = 0:dt:tempo_simulacao   
@@ -860,7 +897,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 % plotar_ganho_kalman(t,L_k,2);
 
-%% 50 - Função Densidade de Probabilidades.
+%% 52 - Função Densidade de Probabilidades.
 % % Código para a criação dó grafico de uma PDF  com média mu e desvio padrão sigma
 % 
 % % Código dos caracteres especiais utilizados no gráfico
@@ -932,7 +969,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % ax.XTick = [mu-4*sigma mu-3*sigma  mu-2*sigma mu-sigma mu mu+sigma mu+2*sigma  mu+3*sigma mu+4*sigma]; % Muda os marcadores do eixo x
 % ax.XTickLabel = {num2str(-4*sigma), num2str(-3*sigma),  num2str(-2*sigma), num2str(-sigma), num2str(mu), num2str(sigma), num2str(2*sigma),  num2str(3*sigma), num2str(4*sigma)}; % Coloca os valores em cada marcador no eixo x
         
-%% 51 - Ruido Branco Gaussiano.
+%% 53 - Ruido Branco Gaussiano.
 % Código que cria um gráfico que contém um ruído de média mu e desvio
 % padrão sigma abaixo do gráfico da FDP
 
