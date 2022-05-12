@@ -14,8 +14,8 @@ if isempty(y2)
         hold on;  % Retém o gráfico corrente
         axis([-4,4,-3,3]); % Define os eixos x e y  
         grid on;  % Habilita a grade
-        p1 = plot([ y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-        p2 = plot(y1(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente 
+        plot([ y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+        plot(y1(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente 
         title(strcat('Animação -',char(160),titulo1));
         xlabel('Posição do carrinho - m');
         ylabel(strcat('l*Cos ',char(160),char(952)));
@@ -33,21 +33,31 @@ else
     xlabel('Posição do carrinho - m');
     ylabel(strcat('l*Cos ',char(160),char(952)));
     
-        for i = 1:length(y1)
+    if length(y1) >= length(y2)
+        maior = y1
+        menor = y2
+    else
+        maior = y2
+        menor = y1
+    end     
+    
+        for i = 1:length(maior)
             cla(ax1);    % Limpa a figura anterior
-            cla(ax2);    % Limpa a figura anterior
             hold(ax1,'on');  % Retém o gráfico corrente
-            hold(ax2,'on');  % Retém o gráfico corrente
             axis(ax1,[-4,4,-3,3]); % Define os eixos x e y
-            axis(ax2,[-4,4,-3,3]); % Define os eixos x e y 
             grid(ax1,'on');  % Habilita a grade
-            grid(ax2,'on');  % Habilita a grade
-            p1 = plot(ax1,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-            p2 = plot(ax1,y1(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente 
-            p3 = plot(ax2,[ y2(i,1), y2(i,1)+lh*sin(y2(i,2))], [0, lh*cos(y2(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-            p4 = plot(ax2,y2(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente        
-            hold(ax1,'off');  % Retém o gráfico corrente
-            hold(ax2,'off');    % Libera o gráfico corrente
+            p1 = plot(ax1,[maior(i,1), maior(i,1)+lh*sin(maior(i,2))], [0, lh*cos(maior(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+            p2 = plot(ax1,maior(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente 
+            hold(ax1,'off');  % Retém o gráfico corrente            
+            if i <= length(menor)
+                cla(ax2);    % Limpa a figura anterior
+                hold(ax2,'on');  % Retém o gráfico corrente
+                axis(ax2,[-4,4,-3,3]); % Define os eixos x e y             
+                grid(ax2,'on');  % Habilita a grade
+                p3 = plot(ax2,[menor(i,1), menor(i,1)+lh*sin(menor(i,2))], [0, lh*cos(menor(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                p4 = plot(ax2,menor(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente        
+                hold(ax2,'off');    % Libera o gráfico corrente
+            end
             drawnow(); % Atualiza a figura com os dados anteriores
         end     
 end
