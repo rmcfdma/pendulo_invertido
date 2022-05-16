@@ -31,15 +31,13 @@ end
  
     nexttile;
     plot(t1,y1(1,:)','LineWidth',w);               % Plot da posição do carrinho do sistema 1 
-    title('(a)','FontSize',m)                      % Título do gráfico   
-    xlabel('Tempo - s')                            % Texto do eixo x
+    xlabel('(a)','FontSize',v)                     % Texto do eixo x
     ylabel('Posição do carrinho - m','FontSize',v) % Texto do eixo y
     grid on;                                       % Habilita a grade
     if dois                                        % Plotar dois sistemas
       hold on;                                     % Retém o gráfico
       plot(t2,y2(1,:)','LineWidth',w);             % Plot da posição do carrinho do sistema 2
       legend(legenda1,legenda2,'FontSize',v)       % Legenda para dois sistemas
-
     end
     
   
@@ -50,17 +48,15 @@ end
       plot(t2,(180/pi)*y2(2,:)','LineWidth',w);    % Plot do ângulo da haste do sistema 2
       legend(legenda1,legenda2,'FontSize',v);      % Legenda do gráfico
     end
-    title('(b)','FontSize',m)                      % Título do gráfico
-    xlabel('Tempo - s')                            % Texto do eixo x
+    xlabel('(b)','FontSize',v)                     % Texto do eixo x
     ylabel('Posição da Haste - grau','FontSize',v) % Texto do eixo y
     grid on;                                       % Habilita a grade  
 
  
     nexttile;
     plot(t1,x1(2,:),'LineWidth',w);                % Plot da velocidade linear do sistema 1
-    xlabel('Tempo - s');                           % Texto do eixo x
+    xlabel('(c)','FontSize',v);                    % Texto do eixo x
     grid on;                                       % Habilita a grade
-    title('(c)','FontSize',m)                      % Título do gráfico       
     if ~dois                                       % Se for somente um sistema
         hold on;                                   % Retém o gráfico
         plot(t1,x1(4,:),'LineWidth',w);            % Plot da velocidade angular do sistema 1 
@@ -89,17 +85,15 @@ end
         hold on                          % retém o gráfico
         plot(t2,x2(4,:),'LineWidth',w);  % Plot da velocidade angular do sistema 2
         legend('Medida','Estimada','FontSize',v) % Legenda do gráfico
-        xlabel('Tempo - s');             % Texto do eixo x
-        grid on;                         % Libera o gráfico
-        title('(d)','FontSize',m)        % Título do gráfico         
+        xlabel('(d)','FontSize',v);      % Texto do eixo x
+        grid on;                         % Libera o gráfico   
         ylabel('Velocidade da Haste rad/s','FontSize',v); % Texto do eixo y
     end
         
      if ~dois          
         nexttile;
         plot(t1,u1','LineWidth',w);               % Plot do sinal de controle 
-        title('(d)','FontSize',m)                 % Título do gráfico
-        xlabel('Tempo - s');                      % Texto do eixo x
+        xlabel('(d)','FontSize',v);               % Texto do eixo x
         ylabel('Sinal de Controle','FontSize',v); % Texto do eixo y
         grid on;                                  % Habilita a grade
         hold on;                                  % Retém o gráfico
@@ -109,55 +103,58 @@ end
         hold on;                                  % Rtém o gráficoe
         plot(t2,u2','LineWidth',w);               % Plot do sinal de controle 
         legend(legenda1,legenda2,'FontSize',v);   % Legenda do gráfico    
-        title('(d)','FontSize',m)                 % Título do gráfico
-        xlabel('Tempo - s');                      % Texto do eixo x
+        xlabel('(d)','FontSize',v);               % Texto do eixo x
         ylabel('Sinal de Controle','FontSize',v); % Texto do eixo y
         grid on;                                  % Habilita a grade
         hold on;                                  % Retém o gráfico
      elseif dois & filtragem                      % Se for dois sistemas e tratar-se de filtragem
          fig2 = figure(2);                        % Cria uma segunda figura
-         tl2 = tiledlayout(2,2);                  % Layout da figura 2 linhas e 2 colunas
+         tl2 = tiledlayout(2,3);                  % Layout da figura 2 linhas e 2 colunas
          tl2.TileSpacing = 'compact';             % Diminui o espaço entre os graficos
          tl2.Padding = 'compact';                 % Diminui o espaço lateral dos graficos
          
          nexttile;
          plot(t1,u1','LineWidth',w);               % Plot do sinal de controle 
-         title('(e)','FontSize',m)                 % Título do gráfico
-         xlabel('Tempo - s');                      % Texto do eixo x
+         xlabel('(e)','FontSize',v);               % Texto do eixo x
          ylabel('Sinal de Controle','FontSize',v); % Texto do eixo y
          grid on;                                  % Habilita a grade
          
+                 
          nexttile;
-         plot(t1,p','LineWidth',w);                % Plot do ângulo da haste do sistema 1  
-         title('(f)','FontSize',m)                 % Título do gráfico
+         plot(t1,e(1,:)','LineWidth',w);                      % Plot do ângulo da haste do sistema 1  
+         xlabel('(f)','FontSize',v);                          % Texto do eixo x
+         ylabel('Erro de Estimativa - Saída 1','FontSize',v); % Texto do eixo y
+         grid on;
+         
+         nexttile;
+         plot(t1,e(2,:)','LineWidth',w);                      % Plot do ângulo da haste do sistema 1  
+         xlabel('(g)','FontSize',v);                          % Texto do eixo x
+         ylabel('Erro de Estimativa - Saída 2','FontSize',v); % Texto do eixo y
+         grid on;
+         
+         nexttile;
+         plot(t1,p','LineWidth',w);                 % Plot do ângulo da haste do sistema 1  
          legend('Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
-         xlabel('Tempo - s')                       % Texto do eixo x
-         ylabel('Covarância do Erro','FontSize',v) % Texto do eixo y
-         grid on;                                  % Habilita a grade
+         xlabel('(h)','FontSize',v);                % Texto do eixo x
+         ylabel('Covarância do Erro','FontSize',v); % Texto do eixo y
+         grid on;                                   % Habilita a grade
          
+        
+         L_1 = L_k(:,(1:2:end));
+         L_2 = L_k(:,(2:2:end));
          nexttile;
-         plot(t1,e','LineWidth',w);                % Plot do ângulo da haste do sistema 1  
-         title('(g)','FontSize',m)                 % Título do gráfico
-         legend('Posição do Carrinho','Ângulo da Haste','FontSize',v) % Legenda do gráfico
-         xlabel('Tempo - s')                       % Texto do eixo x
-         ylabel('Erro de Estimativa','FontSize',v) % Texto do eixo y
-         grid on;
-         
-         nexttile;
-         L_1 = norm(L_k(:,1),2);
-         L_2 = norm(L_k(:,2),2);
-         for i = 3:2:length(L_k)
-           L_1 = [L_1 norm(L_k(:,i),2)];
-           L_2 = [L_2 norm(L_k(:,i+1),2)];
-         end
          plot(t1,L_1','LineWidth',w)
-         hold on
-         plot(t1,L_2','LineWidth',w)
-         hold off
-         title('(h)','FontSize',m);
-         ylabel('Ganho de Kalman','FontSize',v);
-         xlabel('Tempo - s');
+         legend('Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
+         ylabel('Ganho de Kalman - Saída 1','FontSize',v);
+         xlabel('(i)','FontSize',v);                % Texto do eixo x
          grid on;
-         legend('Referente à Saída 1 - Posição do Carrinho','Referente à Saída 2 - Ângular da haste','FontSize',v) 
+         
+         nexttile;
+         plot(t1,L_2','LineWidth',w)
+         legend('Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
+         ylabel('Ganho de Kalman - Saída 2','FontSize',v);
+         xlabel('(j)','FontSize',v);                % Texto do eixo x
+         grid on;
+         
      end          
 end
