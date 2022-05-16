@@ -4,7 +4,7 @@ clear all;
 clc;
 
 %% 2 - Parâmetros de simulação.
-tamanho_legenda = 13;
+tamanho_legenda = 14;
 tamanho_titulo = 14;
 espessura_linha = 2;
 
@@ -477,7 +477,7 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     U2 = [U2 u2];                           % Acumulando o sinal de controle
 %     t = [t i];                              % Acumulando o tempo
 % end
-
+% 
 % plotar_sistema(t,X,Y,U,t,X2,Y2,U2,[],[],[],espessura_linha,'Linearizado','Não-Linear',tamanho_legenda,tamanho_titulo); % Plot do sistema
 % animar_pendulo(Y',Y2',2,l,l_carrinho,h_carrinho,'Linearizado','Não-Linear'); % Animação
 
@@ -588,37 +588,37 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 
 %% 44 - LQG (Filtro de Kalman + LQR) sem ruído.
-% F = expm(A*dt);                        % Matriz de transição estados
-% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
-% 
-% for i = 0:dt:tempo_simulacao
-%     u = -K*xhat;                       % Lei de controle
-%     x = x+(A*x + B*u)*dt;              % x[n+1] = (Ax[n] + Bu[n] + w)*dt 
-%     y = C*x;                           % Medição
-%     % Predição
-%     xhat  = F*x + G*u;                 % Predição do estado estimado 
-%     yhat = C*xhat;                     % Medição do estado predito
-%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
-%     % Resíduos
-%     S = C*P*C'+ R;                     % Resíduo da covariância
-%     yt = y - yhat;                     % Resíduo da medição
-%     % Atualização   
-%     L = P*C'*inv(S);                   % Ganho de Kalman
-%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
-%     yhat = C*xhat;                     % Medição do estado atualizado
-%     P = P - L*C*P;                     % Equação de atualização da covariância
-%     % Acumuladores
-%     X = [X x];                         % Acumulando o estado
-%     Y = [Y y];                         % Acumulando a saída não corrompida
-%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
-%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
-%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
-%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
-%     Yt = [Yt yt];                      % Acumulando o erro de medição
-%     U = [U u];                         % Acumulando a lei de controle
-%     t = [t i];                         % Acumulando o tempo diferencial
-% end
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,espessura_linha,'Medido','Estimado',tamanho_legenda,tamanho_titulo); % Plot do sistema
+F = expm(A*dt);                        % Matriz de transição estados
+G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
+
+for i = 0:dt:tempo_simulacao
+    u = -K*xhat;                       % Lei de controle
+    x = x+(A*x + B*u)*dt;              % x[n+1] = (Ax[n] + Bu[n] + w)*dt 
+    y = C*x;                           % Medição
+    % Predição
+    xhat  = F*x + G*u;                 % Predição do estado estimado 
+    yhat = C*xhat;                     % Medição do estado predito
+    P  = F*P*F'+ Q;                    % Predição da covariância do erro
+    % Resíduos
+    S = C*P*C'+ R;                     % Resíduo da covariância
+    yt = y - yhat;                     % Resíduo da medição
+    % Atualização   
+    L = P*C'*inv(S);                   % Ganho de Kalman
+    xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
+    yhat = C*xhat;                     % Medição do estado atualizado
+    P = P - L*C*P;                     % Equação de atualização da covariância
+    % Acumuladores
+    X = [X x];                         % Acumulando o estado
+    Y = [Y y];                         % Acumulando a saída não corrompida
+    Xhat = [Xhat xhat];                % Acumulando o estado estimado
+    Yhat = [Yhat yhat];                % Acumulando a saída estimada
+    Px = [Px diag(P)];                 % Acumulando a covariância atualizada
+    L_k = [L_k L];                     % Acumulando o Ganho de Kalman
+    Yt = [Yt yt];                      % Acumulando o erro de medição
+    U = [U u];                         % Acumulando a lei de controle
+    t = [t i];                         % Acumulando o tempo diferencial
+end
+plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,espessura_linha,'Medido','Estimado',tamanho_legenda,tamanho_titulo); % Plot do sistema
 % animar_pendulo(Y',Yhat',2,l,l_carrinho,h_carrinho,'Sistema Real','Sistema Estimado'); % Animação
 
 %% 45 - LQG (Filtro de Kalman + LQR) com ruído no sistema.
@@ -1003,3 +1003,4 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % ax.YTickLabel = {num2str(-4*sigma), num2str(-3*sigma),num2str(-2*sigma), num2str(-sigma), num2str(mu), num2str(sigma),num2str(2*sigma),  num2str(3*sigma), num2str(4*sigma)};% Coloca o texto nas marcações do eixo horizontal
 % ax.YLim = [-4*sigma 4*sigma];                          % Altera os valores limites do eixo vertical do gráfico
 % ax.XLim = [0 x_length];                                % Altera os valores limites do eixo horizontal do gráfico 
+
