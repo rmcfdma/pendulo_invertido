@@ -3,10 +3,6 @@ close all;
 clear all;
 clc;
 
-%% Senha e usuário github.
-% senha: clarineta6641
-% usuario: rmcfdma
-
 %% 2 - Parâmetros de simulação.
 tamanho_legenda = 14;
 tamanho_titulo = 14;
