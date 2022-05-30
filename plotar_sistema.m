@@ -1,297 +1,197 @@
-function plotar_sistema(t1,x1,y1,u1,t2,x2,y2,u2,t3,x3,y3,u3,e,e2,p,p2,L_k,L_k2,w,legenda1,legenda2,legenda3,v,m)
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Função que plota os gráficos para os sistemas com ou sem filtro.     %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
+function animar_pendulo(y1,y2,y3,y4,s,l_haste,l_carrinho,h_carrinho,titulo1,titulo2,titulo3,titulo4,nome_arquivo,titulo,Q,R,var_Q,var_R,var_w,var_v,dt,ci1,ci2,ci3,limites_grafico,gravar)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Função que realiza a animação do pêndulo organizando o layout conforme o % 
+% número de sistema a ser simulado, inclusive com vetores de tamanhos      %
+% diferentes e grava a animação no formato .mp4                            %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
 %% Dicionário de variáveis
-% t1 -> Tempo de simulação para o sistema 1
-% x1 -> Estados do sistema 1
-% y1 -> Saida do sistema 1
-% t2 -> Tempo de simulação para o sistema 2
-% x2 -> Estados do sistema 2
-% y2 -> Saida do sistema 2
-% t3 -> Tempo de simulação para o sistema 3
-% x3 -> Estados do sistema 3
-% y3 -> Saida do sistema 3
-% u1  -> Sinal de controle do sistema 1
-% u2  -> Sinal de controle do sistema 1
-% u3  -> Sinal de controle do sistema 1
-% e1  -> Erro de estimativa entre a medição e o filtro 1 
-% e1  -> Erro de estimativa entre a medição e o filtro 2 
-% p   -> Covariância do erro para o filtro 1
-% p2  -> Covariância do erro para o filtro 2
-% legenda1 -> Legenda do sistema 1
-% legenda2 -> Legenda do sistema 2
-% legenda3 -> Legenda do sistema 3
-% w  -> Espessura da linha do gráfico
-% v  -> Tamanho da fonte da legenda e eixo y 
-% m  -> Tamanho da fonte do título 
+    % y1 -> Saída do sistema 1
+    % y2 -> Saída do sistema 2
+    % y3 -> Saída do sistema 3
+    % y4 -> Saída do sistema 4
+    % x -> Estado atual do sistema
+    % s -> Escala da animação para aumento ou diminuição das dimensão do desenho
+    % l_haste -> Comprimento da haste
+    % l_carrinho -> Comprimento do carrinho
+    % h_carrinho -> Altura do carrinho
+    % titulo1 -> Título do sistema 1
+    % titulo2 -> Título do sistema 2
+    % titulo3 -> Título do sistema 3
+    % titulo4 -> Título do sistema 4
+    % nome_arquivo -> Nome do arquivo de vídeo que irá ser gravado
+    % titulo -> Título mestre no topo dos gráficos
+    % Q -> Matriz de poderação dos estados do LQR
+    % R -> Matriz de ponderação do controle do LQR
+    % var_Q -> Variância da incerteza do processo
+    % var_R -> Variância da incerteza da medição
+    % var_w -> Variância do ruído aditivo no processo
+    % var_v -> Variância do ruído aditivo na medição
+    % dt -> Período de amostragem
+    % ci1 -> Condições iniciais para o sistema 1
+    % ci2 -> Condições iniciais para o sistema 2
+    % ci3 -> Condições iniciais para o sistema 3
+    % gravar -> Variável lógica que indica se a animação será gravada (0 - não gravar e 1 - gravar)
+%% Obtenção das dimensões do modelo físico e aplicação da escala 
+    lh = l_haste*s;            % Comprimento da haste em escala
+    lc = l_carrinho*s;         % Comprimento do carrinho em escala
+    hc = h_carrinho*s;         % Altura do carrinho em escala
+    limites_grafico = limites_grafico;
+    
+%% Configuração do título
+    variancias = strcat(char(963),char(178),'_Q =',char(160),num2str(var_Q(1,1)),',',char(160),char(160),char(963),char(178),'_R =',char(160),num2str(var_R(1,1)),',',char(160),char(160),char(963),char(178),'_w =',char(160),num2str(var_w),',',char(160),char(160),char(963),char(178),'_v =',char(160),num2str(var_v))
+    periodo_amostragem = strcat('T =',char(160),dt);           % Período de Amostragem
+    Q_lqr = strcat('Q = diag',char(160),mat2str(diag(Q)',4));  % Diagonal principal da matriz Q do LQR
+    R_lqr = strcat('R =',char(160),num2str(R));                % Matriz R do LQR
+    subtitulo = strcat(periodo_amostragem,',',char(160),char(160),Q_lqr,',',char(160),char(160),R_lqr,',',char(160),char(160),variancias); % Subtítulo    
 
-um = 0;               % Inicialização (não é para 1 gráfico)
-dois = 0;             % Inicialização (não é para 2 gráfico)
-tres = 0;             % Inicialização (não é para 3 gráfico)
-filtragem = 0;        % Inicializa o indicador de filtragem (false)
-controle1 = 0;        % Inicializa o indicador de controle do sistema 1
-
-
-if isempty(x2) & isempty(x3) & isempty(u2)       % Se existir apenas um sistema
-    um = 1;
-elseif ~isempty(x2) & isempty(x3) & ~isempty(u2) % Se existir um segundo sistema
-    dois = 1;
-elseif ~isempty(x3) & ~isempty(u2)               % Se existir um terceiro sistema  
-    tres = 1;
-end
-if length(L_k) ~= 0 & length(p) ~= 0             % Se existir um filtro
-    filtragem = 1;
-end    
-if ~isempty(u1) & all(u1 ~= 0)                   % Se o controle estiver presente
-    controle1 = 1;
-end
-
-
-    fig1 = figure(1);             % cria uma nova figura
-    tl1 = tiledlayout(2,2);       % Layout da figura 2 linhas e 2 colunas
-    tl1.TileSpacing = 'compact';  % Diminui o espaço entre os graficos
-    tl1.Padding = 'compact';      % Diminui o espaço lateral dos gráficos
- 
-    nexttile;                                      % Gráfico da posição do carrinho
-    p1 = plot(t1,y1(1,:)','LineWidth',w);          % Plot da posição do carrinho do sistema 1 
-    xlabel('Tempo [s]','FontSize',v)               % Texto do eixo x
-    ylabel('Posição do Carrinho [m]','FontSize',v) % Texto do eixo y
-    grid on;                                       % Habilita a grade
-    if dois & ~tres                                % Plotar dois sistemas
-      hold on;                                     % Retém o gráfico
-      p2 = plot(t2,y2(1,:)','LineWidth',w);        % Plot da posição do carrinho do sistema 2
-      legend(legenda1,legenda2,'FontSize',v)       % Legenda para dois sistemas
-    elseif tres                                    % Plotar três sistema
-      hold on;                                     % Retém o gráfico
-      p3 = plot(t2,y2(1,:)','LineWidth',w);        % Plot da posição do carrinho do sistema 2,':*g'
-      %  p3.MarkerIndices = 1:250:length(y2);      % 
-      p4 = plot(t3,y3(1,:)','LineWidth',w);        % Plot da posição do carrinho do sistema 2,'-r',
-      legend(legenda1,legenda2,legenda3,'FontSize',v)  % Legenda para dois sistemas    
+%% Criação e abertura do arquivo de vídeo   
+    if gravar                  % Se for para gravar o vídeo
+        video = VideoWriter(strcat('animacao\',nome_arquivo,'.mp4'),'MPEG-4'); % Cria o arquivo de video
+        open(video);           % Abre o arquivo de video
     end
-      
-    nexttile;                                      % Gráfico da posição angular da haste
-    p5 = plot(t1,(180/pi)*y1(2,:)','LineWidth',w); % Plot do ângulo da haste do sistema 1
-    xlabel('Tempo [s]','FontSize',v)               % Texto do eixo x
-    ylabel(strcat('Posição da Haste - [',char(176),']'),'FontSize',v) % Texto do eixo y
-    grid on;                                       % Habilita a grade  
-    if dois & ~tres                                % Plotar dois sistemas
-      hold on;                                     % Retém o gráfico
-      p6 = plot(t2,(180/pi)*y2(2,:)','LineWidth',w);  % Plot do ângulo da haste do sistema 2
-      legend(legenda1,legenda2,'FontSize',v);      % Legenda do gráfico
-    elseif tres                                    % Se forem 3 sistemas
-      hold on;                                     % Retém o gráfico
-      p7 = plot(t2,(180/pi)*y2(2,:)','LineWidth',w);   % Plot do ângulo da haste do sistema 2,':*g'
-      %  p7.MarkerIndices = 1:250:length(y2)           % Quantidade de marcadores no gráfico
-      p8 = plot(t3,(180/pi)*y3(2,:)','LineWidth',w);   % Plot do ângulo da haste do sistema 2,'-r'
-      legend(legenda1,legenda2,legenda3,'FontSize',v); % Legenda do gráfico
-    end
-     
-    nexttile;                                      % Gráfico do sinal de controle
-    plot(t1,x1(2,:),'LineWidth',w);                % Plot da velocidade linear do sistema 1
-    xlabel('Tempo [s]','FontSize',v);              % Texto do eixo x
-    grid on;                                       % Habilita a grade
-    if ~dois & controle1 & ~tres                   % Se for somente um sistema e hover controle
-        hold on;                                   % Retém o gráfico
-        plot(t1,(180/pi)*x1(4,:),'LineWidth',w);   % Plot da velocidade angular do sistema 1 
-        legend('Velocidade Linear do Carrinho','Velocidade Angular da Haste','FontSize',v); % Legenda do gráfico
-        ylabel('Vel. Carrinho [m/s] - Haste [graus/s]','FontSize',v) % Texto do eixo y
-        hold off;                                            % Libera o gráfico    
-    elseif ~dois & ~controle1 & ~tres                        % Se for somente um sistema e não houver controle       
-        ylabel('Velocidade do Carrinho [m/s]','FontSize',v)  % Texto do eixo y               
-        nexttile;                                            % Gráfico da velocidade do carrinho
-        plot(t1,(180/pi)*x1(4,:),'LineWidth',w);             % Plot da velocidade angular do sistema 1 
-        ylabel('Velocidade da Haste [graus/s]','FontSize',v) % Texto do eixo y
-        xlabel('Tempo [s]','FontSize',v);                    % Texto do eixo x
-        grid on;       
-    elseif dois & ~filtragem & ~tres               % Se for dois sistemas e não tratar-se de filtragem
-        hold on;                                   % Retém o gráfico
-        plot(t1,(180/pi)*x1(4,:),'LineWidth',w);   % Plot da velocidade angular do sistema 1 
-        plot(t2,x2(2,:),'LineWidth',w)             % Plot da velocidade linear do sistema 2
-        plot(t2,(180/pi)*x2(4,:),'LineWidth',w);   % Plot da velocidade angular do sistema 2
-        vcarrinho = 'Velocidade do Carrinho -';    % Texto
-        vhaste = 'Velocidade da Haste -';          % Texto
-        legend(strcat(vcarrinho,char(160),legenda1),strcat(vhaste,char(160),legenda1),strcat(vcarrinho,char(160),legenda2),strcat(vhaste,char(160),legenda2),'FontSize',v); % Legenda do gráfico
-        ylabel('Vel. Carrinho [m/s] - Haste [graus/s]','FontSize',v) % Texto do eixo y
-        hold off;                                  % Libera o gráfico
-     elseif dois & filtragem & ~tres               % Se forem dois sistemas e houver filtragem
-        hold on;                                   % Retém o grpafico
-        plot(t2,x2(2,:),'LineWidth',w)             % Plot da velocidade linear do sistema 2 
-        legend('Esperança','Estimada','FontSize',v)% Legenda
-        ylabel('Velocidade do Carrinho [m/s]','FontSize',v);  % Label do eixo y
-        hold off;                                  % Libera o gráfico
-        
-        nexttile;                                  % Gráfico das velocidade linear e angular do carrinho e da haste
-        plot(t1,(180/pi)*x1(4,:),'LineWidth',w);   % Plot da velocidade linear do sistema 1
-        hold on                                    % retém o gráfico
-        plot(t2,(180/pi)*x2(4,:),'LineWidth',w);   % Plot da velocidade angular do sistema 2
-        legend('Esperança','Estimada','FontSize',v)% Legenda do gráfico
-        xlabel('Tempo [s]','FontSize',v);          % Texto do eixo x
-        grid on;                                   % Libera o gráfico   
-        ylabel('Velocidade da Haste [graus/s]','FontSize',v); % Texto do eixo y
-    elseif tres                                    % Se forem três sistema
-        hold on;                                   % Retém o grpafico
-        plot(t2,x2(2,:),'LineWidth',w)             % Plot da velocidade linear do sistema 2 
-        plot(t3,x3(2,:),'LineWidth',w)             % Plot da velocidade linear do sistema 2 
-        legend('Esperança','EKF','KF','FontSize',v)           % Legenda
-        ylabel('Velocidade do Carrinho [m/s]','FontSize',v);  % Label do eixo y
-        hold off;                                  % Libera o gráfico
-        
-        nexttile;                                     % Grafico das velocidade 
-        plot(t1,(180/pi)*x1(4,:),'LineWidth',w);      % Plot da velocidade angular da haste do sistema 1
-        hold on                                       % retém o gráfico
-        plot(t2,(180/pi)*x2(4,:),'LineWidth',w);      % Plot da velocidade angular da haste do sistema 2
-        plot(t3,(180/pi)*x3(4,:),'LineWidth',w);      % Plot da velocidade angular da haste do sistema 3
-        legend('Esperança','EKF','KF','FontSize',v);  % Legenda do gráfico
-        xlabel('Tempo [s]','FontSize',v);             % Texto do eixo x
-        grid on;                                      % Libera o gráfico   
-        ylabel('Velocidade da Haste [graus/s]','FontSize',v); % Texto do eixo y    
-    end
-        
-     if um                                        % Se for apenas um sistema e houver controle
-        nexttile;                                 % Gráfico do sinal de controle para um sistema
-        plot(t1,u1','LineWidth',w);               % Plot do sinal de controle 
-        xlabel('Tempo [s]','FontSize',v);         % Texto do eixo x
-        ylabel('Sinal de Controle','FontSize',v); % Texto do eixo y
-        grid on;                                  % Habilita a grade
-        hold on;                                  % Retém o gráfico
-     elseif dois & ~filtragem & ~tres             % Se forem apenas dois sistemas e não houver filtragem
-        nexttile;                                 % Gráfico do sinal de controle para dois sistemas
-        plot(t1,u1','LineWidth',w);               % Plot do sinal de controle 
-        hold on;                                  % Retém o gráficoe
-        plot(t2,u2','LineWidth',w);               % Plot do sinal de controle 
-        legend(legenda1,legenda2,'FontSize',v);   % Legenda do gráfico    
-        xlabel('Tempo [s]','FontSize',v);         % Texto do eixo x
-        ylabel('Sinal de Controle','FontSize',v); % Texto do eixo y
-        grid on;                                  % Habilita a grade
-        hold on;                                  % Retém o gráfico
-     elseif dois & filtragem & ~tres              % Se forem dois sistemas e houver filtragem
-         fig2 = figure(2);                        % Cria uma segunda figura
-         tl2 = tiledlayout(2,3);                  % Layout da figura 2 linhas e 2 colunas
-         tl2.TileSpacing = 'compact';             % Diminui o espaço entre os graficos
-         tl2.Padding = 'compact';                 % Diminui o espaço lateral dos graficos
-         
-         nexttile;                                % Gráfico para um sistema com filtro
-         plot(t1,u1','LineWidth',w);              % Plot do sinal de controle com filtro
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         ylabel('Sinal de Controle','FontSize',v);% Texto do eixo y
-         grid on;                                 % Habilita a grade
-                         
-         nexttile;                                % Gráfico do erro de estimativa sistema e filtro 1
-         plot(t1,e(1,:)','LineWidth',w);          % Plot do erro de estimativa entre o sistema e o filtro 1  
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         ylabel('Erro de Estimativa [Saída 1]','FontSize',v); % Texto do eixo y
-         grid on;                                 % Habilita a grade
-         
-         nexttile;                                % Gráfico do erro de estimativa sistema e filtro 2
-         plot(t1,e(2,:)','LineWidth',w);          % Plot do erro de estimativa entre o sistema e o filtro 2  
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         ylabel('Erro de Estimativa [Saída 2]','FontSize',v); % Texto do eixo y
-         grid on;                                 % Habilita a grade
-         
-         nexttile;                                % Gráfico da covariência
-         plot(t1,p','LineWidth',w);               % Plot do ângulo da haste do sistema 1  
-         legend('Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         ylabel('Covarância do Erro','FontSize',v); % Texto do eixo y
-         grid on;                                 % Habilita a grade
-         
-         L_1 = L_k(:,(1:2:end));                  % Seleciona as colunas ímpares referente a saída 1
-         L_2 = L_k(:,(2:2:end));                  % Seleciona as colunas pares referente a saída 2
-         
-         nexttile;                                % Gráfico do Ganho de Kalman referente à posição do carrinho
-         plot(t1,L_1','LineWidth',w)              % Plota o Ganho de Kalman referente a saída 1
-         legend('Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
-         ylabel('Ganho de Kalman [Saída 1]','FontSize',v); % Label do eixo vertical
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         grid on;                                 % Habilita a grade
-         
-         nexttile;                                % Gráfico do Ganho de Kalman referente ao ângulo da haste
-         plot(t1,L_2','LineWidth',w)              % Plota o do Ganho de Kalman referente a saída 2
-         legend('Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
-         ylabel('Ganho de Kalman [Saída 2]','FontSize',v); % Texto do eixo y
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         grid on;                                 % Habilita a grade
-         
-    elseif tres                                   % Se forem três sistemas
-         fig2 = figure(2);                        % Cria uma segunda figura
-         tl2 = tiledlayout(2,3);                  % Layout da figura 2 linhas e 3 colunas
-         tl2.TileSpacing = 'compact';             % Diminui o espaço entre os graficos
-         tl2.Padding = 'compact';                 % Diminui o espaço lateral dos graficos
-         
-         nexttile;                                % Gráfico dois sinais de controle referentes aos sistema e seus filtros
-         plot(t2,u2','LineWidth',w);              % Plot do sinal de controle do sistema 1 ,'-r'
-         hold on;                                 % Retém o gráfico
-         pu3 = plot(t3,u3','LineWidth',w);        % Plot do sinal de controle do sistema 2 ,':b'
-         % pu3.MarkerIndices = 1:50:length(u3)
-         legend('EKF','KF','FontSize',v)          % Legenda
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         ylabel('Sinal de Controle','FontSize',v);% Texto do eixo y
-         grid on;                                 % Habilita a grade
-         
-         nexttile;                                % Gráfico dos sinais de erro 
-         plot(t1,e(1,:)','-r','LineWidth',w);     % Plot do erro de estimativa da posição do carrinho entre o sistema 1 e seus estimador  ,'-r'
-         hold on                                  % Retém o Gráfico
-         pe21 = plot(t1,e2(1,:)',':b','LineWidth',w);  % Plot do erro de estimativa da posição do carrinho entre o sistema 2 e seus estimador,':b' 
-         pe21.MarkerIndices = 1:500:length(e2)
-         legend('EKF','KF','FontSize',v)          % Legenda
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         ylabel('Erro de Estimativa [Saída 1]','FontSize',v); % Texto do eixo y
-         grid on;
-         
-         nexttile;                                % Grafico dos erros de estimativa 
-         plot(t1,e(2,:)','-r','LineWidth',w);          % Plot do erro de estimativa do ângulo da haste entre o sistema 1 e seus estimador  ,'-r' ,'-r'
-         hold on;                                 % Retém o gráfico
-         pe22 = plot(t1,e2(2,:)',':b','LineWidth',w);  % Plot do erro de estimativa do ângulo da haste entre o sistema 1 e seus estimador  ,'-r' 1':b',
-         pe22.MarkerIndices = 1:500:length(e2)
-         legend('EKF','KF','FontSize',v);         % Legenda   
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         ylabel('Erro de Estimativa [Saída 2]','FontSize',v); % Texto do eixo y
-         grid on;                                 % Habilita a grade
-         
-         nexttile;                                % Gráfico da covariância do filtro 1
-         plot(t1,p','LineWidth',w);               % Plot da covariância do filtro 1  
-         legend('Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         ylabel('Covarância do Erro - EKF','FontSize',v); % Texto do eixo y
-         grid on;                                 % Habilita a grade
-         
-         nexttile;                                % Gráfico da covariância do filtro 2 
-         plot(t3,p2','LineWidth',w);              % Plot da covariância do filtro 2 
-         legend('Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
-         xlabel('Tempo [s]','FontSize',v);        % Texto do eixo x
-         ylabel('Covarância do Erro - KF','FontSize',v); % Texto do eixo y
-         grid on;
-                  
-         nexttile;                                % Gráfico da norma 2 das duas colunas do Ganho de Kalman
-         L_1 = norm(L_k(:,1),2);                  % Norma 2 da primeira coluna de L_k
-         L_2 = norm(L_k(:,2),2);                  % Norma 2 da segunda coluna de L_k
-         L_3 = norm(L_k2(:,1),2);                 % Norma 2 da primeira coluna de L_k2
-         L_4 = norm(L_k2(:,2),2);                 % Norma 2 da segunda coluna de L_k2
-         for i = 3:2:length(L_k)                  % Começa o loop da terceira coluna até o fim
-           L_1 = [L_1 norm(L_k(:,i),2)];          % Acumula a norma das colunas ímpares de L_k
-           L_2 = [L_2 norm(L_k(:,i+1),2)];        % Acumula a norma das colunas pares de L_k
-           L_3 = [L_3 norm(L_k2(:,i),2)];         % Acumula a norma das colunas ímpares de L_k2
-           L_4 = [L_4 norm(L_k2(:,i+1),2)];       % Acumula a norma das colunas pares de L_k2
-         end
-         p15 = plot(t1,L_1','-p','LineWidth',w)   % Mostra L1 
-         p15.MarkerIndices = 1:800:length(L_1)
-         hold on                                  % Retém o gráfico
-         p16 = plot(t1,L_2','-x','LineWidth',w)   % Mostra L2
-         p16.MarkerIndices = 1:600:length(L_1)
-         p17 = plot(t3,L_3','-s','LineWidth',w)   % Mostra L3
-         p17.MarkerIndices = 1:500:length(L_1)
-         p18 = plot(t3,L_4','-d','LineWidth',w)   % Mostra L4
-         p18.MarkerIndices = 1:700:length(L_1)
-         hold off                                 % Libera o gráfico
-         legend('Posição do Carrinho - EKF','Ângulo da Haste - EKF','Posição do Carrinho - KF','Ângulo da Haste - KF','FontSize',v) % Legenda
-         ylabel('Ganho de Kalman - Norma 2','FontSize',v); % Texto do eixo y
-         xlabel('Tempo - s');                     % Texto do eixo x
-         grid on;                                 % Habilita a grade         
-     end          
+    
+%% Animação para 1,2 ou 3 sistemas    
+if isempty(y2) & isempty(y3)          % Se a animação for para 1 sistema
+    f = figure;                       % Cria a conteiner para o gráfico
+    f.Position = [300 100 700 500];   % Tamanho e posição configurados para 2 gráficos [x1,y1,x2,y2]
+    tl1 = tiledlayout(1,1);           % Layout para um sistemas
+    tl1.TileSpacing = 'compact';      % Diminui o espaço entre os gráficos
+    tl1.Padding = 'compact';          % Diminui o espaço ao redor dos gráficos
+    title(tl1,{titulo;subtitulo});        % Título do gráfico 1
+    xlabel(tl1,'Posição Horizontal - m'); % Texto do eixo x
+    ylabel(tl1,'Posição Vertical - m');   % Texto do eixo y
+    ax = nexttile;                        % Gráfico 1
+    title(ax,strcat('ci =',char(160),ci1)); % Título do gráfico 1
+   
+    for i = 1:length(y1)             % Loop até o tamanho de y1       
+      if isgraphics(ax)              % Se o gráfico for válido
+        cla(ax);                     % Apaga o gráfico corrente
+        hold(ax,'on');               % Retém o gráfico corrente
+        axis(ax,limites_grafico);    % Define os eixos x e y  
+        grid(ax,'on');               % Habilita a grade
+        plot(ax,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2); % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+        plot(ax,y1(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente               
+        hold(ax,'off');              % Libera o gráfico corrente
+        drawnow();                   % Atualiza a figura com os dados anteriores
+        if ~isempty(gcf) & gravar    % Verifica se a figura corrente é válida e se gravar = 1 (true)
+          F(i) = getframe(f);        % Obtém a imagem da figura corrente     
+          writeVideo(video,F(i));    % Armazena a imagem    
+        end
+      end
+    end  
+elseif ~isempty(y1) & ~isempty(y3) & isempty(y2)& isempty(y4)   % Se a animação for para dois sistemas
+    f = figure;                          % Cria o conteiner para os gráficos
+    f.Position = [200 200 900 400];      % Tamanho e posição configurados para 2 gráficos [x1,y1,x2,y2]
+    tl2 = tiledlayout(1,2);              % Layout para dois sistemas com uma linha e duas colunas
+    tl2.TileSpacing = 'compact';         % Diminui o espaço entre os gráficos
+    tl2.Padding = 'compact';             % Diminui o espaço ao redor dos gráficos
+    title(tl2,{titulo;subtitulo});       % Título mestre da figura
+    xlabel(tl2,'Posição Horizontal - m') % Texto do eixo x
+    ylabel(tl2,'Posição Vertical - m')   % Texto do eixo y
+    ax1 = nexttile;                      % Gráfico 1
+    title(strcat(titulo1,char(160),char(8658),char(160),'ci =',char(160),ci1)); % Título do gráfico 1
+    ax2 = nexttile;                      % Gráfico 2
+    title(strcat(titulo3,char(160),char(8658),char(160),'ci =',char(160),ci2)); % Título do gráfico 2
+    
+    if length(y1) >= length(y3)          % No caso de 2 vetores de tamanhos diferentes especifica o maior e o menor para o de maior tamanho continuar executando enquanto o menor para 
+        maior = y1;
+        menor = y3;
+    else
+        maior = y3;
+        menor = y1;
+    end     
+    
+        for i = 1:length(maior)                       % Realiza o loop até o tamanho de maior (maior continua e menor para caso tenham tamanhos diferentes)
+            if isgraphics(ax1)                        % Verifica se o handle ax1 é valido
+                cla(ax1);                             % Limpa a figura anterior
+                hold(ax1,'on');                       % Retém o gráfico corrente
+                axis(ax1,limites_grafico);            % Define os eixos x e y
+                grid(ax1,'on');                       % Habilita a grade
+                p1 = plot(ax1,[maior(i,1), maior(i,1)+lh*sin(maior(i,2))], [0, lh*cos(maior(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                p2 = plot(ax1,maior(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente 
+                hold(ax1,'off');                      % Retém o gráfico corrente
+            end
+            if i <= length(menor) & isgraphics(ax2)   % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
+                cla(ax2);                             % Limpa a figura anterior
+                hold(ax2,'on');                       % Retém o gráfico corrente
+                axis(ax2,limites_grafico);            % Define os eixos x e y             
+                grid(ax2,'on');                       % Habilita a grade
+                p3 = plot(ax2,[menor(i,1), menor(i,1)+lh*sin(menor(i,2))], [0, lh*cos(menor(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                p4 = plot(ax2,menor(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente        
+                hold(ax2,'off');                      % Libera o gráfico corrente
+            end
+            drawnow();                                % Atualiza a figura com os dados anteriores                               
+            if ~isempty(gcf) & gravar                 % Verifica se a figura é válida e se gravar = 1 (true)
+                F(i) = getframe(gcf);                 % Obtém a imagem da figura corrente
+                writeVideo(video,F(i));               % Armazena a imagem
+            end
+        end  
+elseif ~isempty(y2) & ~isempty(y3) & ~isempty(y2) & ~isempty(y4) % Se a animação for para três sistemas
+    f = figure;                                      % Cria um figura
+    f.Position = [250 50 850 620]; % [x1,y1,x2,y2]   % Tamanho e posição configurados para 3 gráficos [x1,y1,x2,y2]
+    tl = tiledlayout(2,2)                            % Cria um layout com 1 linha e três colunas
+    tl.TileSpacing = 'compact';
+    tl.Padding = 'compact';
+    title(tl,{titulo;subtitulo});        % Título mestre da figura
+    xlabel(tl,'Posição Horizontal - m'); % Texto do eixo x
+    ylabel(tl,'Posição Vertical - m');   % Texto do eixo y
 
+    ax1 = nexttile;                                  % Grafico da medição do sistema não-linear
+    title(strcat(titulo1,char(160),char(8658),char(160),'ci =',char(160),ci1));   % Título do grafico 1
+    ax2 = nexttile;                                  % Grafico do EKF
+    title(strcat(titulo2,char(160),char(8658),char(160),'ci =',char(160),ci2));   % Título do gráfico 2
+    ax3 = nexttile;                                  % Grafico da medição do sistema linear
+    title(strcat(titulo3,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 3
+    ax4 = nexttile;                                  % Grafico do KF
+    title(strcat(titulo4,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 3
+    
+    for i = 1:length(y1)                              % Loop até o tamanho de maior
+            if isgraphics(ax1)                        % Verifica de ax1 é válido
+                cla(ax1);                             % Limpa a figura anterior
+                hold(ax1,'on');                       % Retém o gráfico corrente
+                axis(ax1,limites_grafico);            % Define os eixos x e y
+                grid(ax1,'on');                       % Habilita a grade
+                p1 = plot(ax1,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                p2 = plot(ax1,y1(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente 
+                hold(ax1,'off');                      % Retém o gráfico corrente
+            end
+            if  isgraphics(ax2)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
+                cla(ax2);                             % Limpa a figura anterior
+                hold(ax2,'on');                       % Retém o gráfico corrente
+                axis(ax2,limites_grafico);            % Define os eixos x e y             
+                grid(ax2,'on');                       % Habilita a grade
+                p3 = plot(ax2,[y2(i,1), y2(i,1)+lh*sin(y2(i,2))], [0, lh*cos(y2(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                p4 = plot(ax2,y2(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente        
+                hold(ax2,'off');                      % Libera o gráfico corrente
+            end
+            if isgraphics(ax3)                        % Continua animando o maior e para o menor e verifica se ax3 ainda é válido
+                cla(ax3);                             % Limpa a figura anterior
+                hold(ax3,'on');                       % Retém o gráfico corrente
+                axis(ax3,limites_grafico);            % Define os eixos x e y             
+                grid(ax3,'on');                       % Habilita a grade
+                p3 = plot(ax3,[y3(i,1), y3(i,1)+lh*sin(y3(i,2))], [0, lh*cos(y3(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                p4 = plot(ax3,y3(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente        
+                hold(ax3,'off');                      % Libera o gráfico corrente
+            end
+            if isgraphics(ax4)                        % Continua animando o maior e para o menor e verifica se ax3 ainda é válido
+                cla(ax4);                             % Limpa a figura anterior
+                hold(ax4,'on');                       % Retém o gráfico corrente
+                axis(ax4,limites_grafico);            % Define os eixos x e y             
+                grid(ax4,'on');                       % Habilita a grade
+                p3 = plot(ax4,[y4(i,1), y4(i,1)+lh*sin(y4(i,2))], [0, lh*cos(y4(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                p4 = plot(ax4,y4(i,1)+[-lc/2,lc/2,lc/2,-lc/2,-lc/2], [0,0,-hc,-hc,0],'magenta','LineWidth',2); % Desesnha o carrinho a partir da posição corrente        
+                hold(ax4,'off');                      % Libera o gráfico corrente
+            end
+            drawnow();                                % Atualiza a figura com os dados anteriores                               
+            if ~isempty(gcf) & gravar                 % Verifica se a figura é válida e se gravar = 1 (true)
+                F(i) = getframe(gcf);                 % Obtém a imagem da figura corrente
+                writeVideo(video,F(i));               % Armazena a imagem
+            end
+        end                                         
 end
-
+%% Fecha o arquivo de vídeo
+if gravar % Se gravar = 1 (true)
+    close(video);
+end
+end
