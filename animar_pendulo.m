@@ -1,11 +1,13 @@
-ffunction animar_pendulo(y1,y2,y3,y4,s,l_haste,l_carrinho,h_carrinho,titulo1,titulo2,titulo3,titulo4,nome_arquivo,titulo,Q,R,var_Q,var_R,var_w,var_v,dt,ci1,ci2,ci3,limites_grafico,gravar)
+function  animar_pendulo(qtd,y1,y2,y3,y4,y5,y6,s,l_haste,l_carrinho,h_carrinho,titulo1,titulo2,titulo3,titulo4,titulo5,titulo6,nome_arquivo,titulo,Q_lqr,R_lqr,sigma_quadrado_w_Q,sigma_quadrado_v_R,sigma_quadrado_w,sigma_quadrado_v,dt,ci1,ci2,ci3,limites_grafico,gravar)
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Função que realiza a animação do pêndulo organizando o layout conforme o % 
 % número de sistema a ser simulado, inclusive com vetores de tamanhos      %
 % diferentes e grava a animação no formato .mp4                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-%% Dicionário de variáveis
+%% Glossário de variáveis
+    % qtd -> Quantidade de gráficos por figura
     % y1 -> Saída do sistema 1
     % y2 -> Saída do sistema 2
     % y3 -> Saída do sistema 3
@@ -32,17 +34,21 @@ ffunction animar_pendulo(y1,y2,y3,y4,s,l_haste,l_carrinho,h_carrinho,titulo1,tit
     % ci2 -> Condições iniciais para o sistema 2
     % ci3 -> Condições iniciais para o sistema 3
     % gravar -> Variável lógica que indica se a animação será gravada (0 - não gravar e 1 - gravar)
+    
+    
 %% Obtenção das dimensões do modelo físico e aplicação da escala 
     lh = l_haste*s;            % Comprimento da haste em escala
     lc = l_carrinho*s;         % Comprimento do carrinho em escala
     hc = h_carrinho*s;         % Altura do carrinho em escala
+    posicao_trilho = [limites_grafico(1,1),-0.6*hc,abs(limites_grafico(1,1))+abs(limites_grafico(1,2)),0.2*hc]; % Trilho
     
 %% Configuração do título
-    variancias = strcat(char(963),char(178),'_Q =',char(160),num2str(var_Q(1,1)),',',char(160),char(160),char(963),char(178),'_R =',char(160),num2str(var_R(1,1)),',',char(160),char(160),char(963),char(178),'_w =',char(160),num2str(var_w),',',char(160),char(160),char(963),char(178),'_v =',char(160),num2str(var_v));
-    periodo_amostragem = strcat('T =',char(160),dt);           % Período de Amostragem
-    Q_lqr = strcat('Q = diag',char(160),mat2str(diag(Q)',4));  % Diagonal principal da matriz Q do LQR
-    R_lqr = strcat('R =',char(160),num2str(R));                % Matriz R do LQR
-    subtitulo = strcat(periodo_amostragem,',',char(160),char(160),Q_lqr,',',char(160),char(160),R_lqr,',',char(160),char(160),variancias); % Subtítulo    
+    variancias = strcat(char(963),char(178),'_Q =',char(160),num2str(sigma_quadrado_w_Q(1,1)),',',char(160),char(160),char(963),char(178),'_R =',char(160),num2str(sigma_quadrado_v_R(1,1)),',',char(160),char(160),char(963),char(178),'_w =',char(160),num2str(sigma_quadrado_w),',',char(160),char(160),char(963),char(178),'_v =',char(160),num2str(sigma_quadrado_v));
+    periodo_amostragem = strcat('T =',char(160),num2str(dt));           % Período de Amostragem
+    q_lqr = strcat('Q = diag',char(160),mat2str(diag(Q_lqr)',4));  % Diagonal principal da matriz Q do LQR
+    r_lqr = strcat('R =',char(160),num2str(R_lqr));                % Matriz R do LQR
+    subtitulo = strcat(periodo_amostragem,',',char(160),char(160),q_lqr,',',char(160),char(160),r_lqr,',',char(160),char(160),variancias); % Subtítulo    
+
 
 %% Criação e abertura do arquivo de vídeo   
     if gravar                  % Se for para gravar o vídeo
@@ -50,81 +56,75 @@ ffunction animar_pendulo(y1,y2,y3,y4,s,l_haste,l_carrinho,h_carrinho,titulo1,tit
         open(video);           % Abre o arquivo de video
     end
     
-%% Trilho do pêndulo
+%% Quantidade de gráficos
+f = figure;                       % Cria a conteiner para o gráfico
 
- 
-    
-%% Animação para 1,2 ou 3 sistemas    
-if isempty(y2) & isempty(y3)          % Se a animação for para 1 sistema
-    f = figure;                       % Cria a conteiner para o gráfico
-    f.Position = [300 100 700 500];   % Tamanho e posição configurados para 2 gráficos [x1,y1,x2,y2]
+if qtd == 1
+    f.Position = [250 150 800 500]; 
     tl1 = tiledlayout(1,1);           % Layout para um sistemas
     tl1.TileSpacing = 'compact';      % Diminui o espaço entre os gráficos
     tl1.Padding = 'compact';          % Diminui o espaço ao redor dos gráficos
     title(tl1,{titulo;subtitulo});        % Título do gráfico 1
     xlabel(tl1,'Posição Horizontal - m'); % Texto do eixo x
     ylabel(tl1,'Posição Vertical - m');   % Texto do eixo y
-    ax = nexttile;                        % Gráfico 1
-    title(ax,strcat('ci =',char(160),ci1)); % Título do gráfico 1
-   
-    for i = 1:length(y1)             % Loop até o tamanho de y1       
-      if isgraphics(ax)              % Se o gráfico for válido
-        cla(ax);                     % Apaga o gráfico corrente
-        hold(ax,'on');               % Retém o gráfico corrente
-        axis(ax,limites_grafico);    % Define os eixos x e y  
-        grid(ax,'on');               % Habilita a grade
-        plot(ax,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2); % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-        rectangle(ax,'Position',[limites_grafico(1,1),-0.2,abs(limites_grafico(1,1))+abs(limites_grafico(1,2)),0.1],'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
-        rectangle(ax,'Position',[y1(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
-        hold(ax,'off');              % Libera o gráfico corrente
+    ax1 = nexttile;       
+     for i = 1:length(y1)             % Loop até o tamanho de y1       
+      if isgraphics(ax1)              % Se o gráfico for válido
+        cla(ax1);                     % Apaga o gráfico corrente
+        hold(ax1,'on');               % Retém o gráfico corrente
+        axis(ax1,limites_grafico);    % Define os eixos x e y  
+        grid(ax1,'on');               % Habilita a grade
+        plot(ax1,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2); % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+        rectangle(ax1,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+        rectangle(ax1,'Position',[y1(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+        hold(ax1,'off');              % Libera o gráfico corrente
         drawnow();                   % Atualiza a figura com os dados anteriores
         if ~isempty(gcf) & gravar    % Verifica se a figura corrente é válida e se gravar = 1 (true)
           F(i) = getframe(f);        % Obtém a imagem da figura corrente     
           writeVideo(video,F(i));    % Armazena a imagem    
         end
       end
-    end  
-elseif ~isempty(y1) & ~isempty(y3) & isempty(y2)& isempty(y4)   % Se a animação for para dois sistemas
-    f = figure;                          % Cria o conteiner para os gráficos
-    f.Position = [200 200 900 400];      % Tamanho e posição configurados para 2 gráficos [x1,y1,x2,y2]
-    tl2 = tiledlayout(1,2);              % Layout para dois sistemas com uma linha e duas colunas
-    tl2.TileSpacing = 'compact';         % Diminui o espaço entre os gráficos
-    tl2.Padding = 'compact';             % Diminui o espaço ao redor dos gráficos
-    title(tl2,{titulo;subtitulo});       % Título mestre da figura
-    xlabel(tl2,'Posição Horizontal - m') % Texto do eixo x
-    ylabel(tl2,'Posição Vertical - m')   % Texto do eixo y
-    ax1 = nexttile;                      % Gráfico 1
+    end  % Gráfico 1
+    
+    
+elseif qtd == 2
+    f.Position = [200 200 900 400];     
+    tl1 = tiledlayout(1,2);           % Layout para um sistemas
+    tl1.TileSpacing = 'compact';      % Diminui o espaço entre os gráficos
+    tl1.Padding = 'compact';          % Diminui o espaço ao redor dos gráficos
+    title(tl1,{titulo;subtitulo});        % Título do gráfico 1
+    xlabel(tl1,'Posição Horizontal - m'); % Texto do eixo x
+    ylabel(tl1,'Posição Vertical - m');   % Texto do eixo y
+    ax1 = nexttile;                       % Gráfico 1
     title(strcat(titulo1,char(160),char(8658),char(160),'ci =',char(160),ci1)); % Título do gráfico 1
-    ax2 = nexttile;                      % Gráfico 2
-    title(strcat(titulo3,char(160),char(8658),char(160),'ci =',char(160),ci2)); % Título do gráfico 2
+    ax2 = nexttile;                       % Gráfico 2
+    title(strcat(titulo2,char(160),char(8658),char(160),'ci =',char(160),ci2)); % Título do gráfico 2
     
-    if length(y1) >= length(y3)          % No caso de 2 vetores de tamanhos diferentes especifica o maior e o menor para o de maior tamanho continuar executando enquanto o menor para 
+    if length(y1) >= length(y2)           % No caso de 2 vetores de tamanhos diferentes especifica o maior e o menor para o de maior tamanho continuar executando enquanto o menor para 
         maior = y1;
-        menor = y3;
+        menor = y2;
     else
-        maior = y3;
+        maior = y2;
         menor = y1;
-    end     
-    
-        for i = 1:length(maior)                       % Realiza o loop até o tamanho de maior (maior continua e menor para caso tenham tamanhos diferentes)
+    end      
+     for i = 1:length(maior)                          % Realiza o loop até o tamanho de maior (maior continua e menor para caso tenham tamanhos diferentes)
             if isgraphics(ax1)                        % Verifica se o handle ax1 é valido
                 cla(ax1);                             % Limpa a figura anterior
                 hold(ax1,'on');                       % Retém o gráfico corrente
                 axis(ax1,limites_grafico);            % Define os eixos x e y
                 grid(ax1,'on');                       % Habilita a grade
-                p1 = plot(ax1,[maior(i,1), maior(i,1)+lh*sin(maior(i,2))], [0, lh*cos(maior(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax1,'Position',[limites_grafico(1,1),-0.2,abs(limites_grafico(1,1))+abs(limites_grafico(1,2)),0.1],'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
-                rectangle(ax1,'Position',[maior(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
-                
-hold(ax1,'off');                      % Retém o gráfico corrente
+                plot(ax1,[maior(i,1), maior(i,1)+lh*sin(maior(i,2))], [0, lh*cos(maior(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax1,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax1,'Position',[maior(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos                
+                hold(ax1,'off');                      % Retém o gráfico corrente
             end
             if i <= length(menor) & isgraphics(ax2)   % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
                 cla(ax2);                             % Limpa a figura anterior
                 hold(ax2,'on');                       % Retém o gráfico corrente
                 axis(ax2,limites_grafico);            % Define os eixos x e y             
                 grid(ax2,'on');                       % Habilita a grade
-                p3 = plot(ax2,[menor(i,1), menor(i,1)+lh*sin(menor(i,2))], [0, lh*cos(menor(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax2,'Position',[limites_grafico(1,1),-0.2,abs(limites_grafico(1,1))+abs(limites_grafico(1,2)),0.1],'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                plot(ax2,[menor(i,1), menor(i,1)+lh*sin(menor(i,2))], [0, lh*cos(menor(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax2,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
                 rectangle(ax2,'Position',[menor(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
                 hold(ax2,'off');                      % Libera o gráfico corrente
             end
@@ -134,33 +134,30 @@ hold(ax1,'off');                      % Retém o gráfico corrente
                 writeVideo(video,F(i));               % Armazena a imagem
             end
         end  
-elseif ~isempty(y2) & ~isempty(y3) & ~isempty(y2) & ~isempty(y4) % Se a animação for para três sistemas
-    f = figure;                                      % Cria um figura
-    f.Position = [250 50 850 620]; % [x1,y1,x2,y2]   % Tamanho e posição configurados para 3 gráficos [x1,y1,x2,y2]
-    tl = tiledlayout(2,2)                            % Cria um layout com 1 linha e três colunas
-    tl.TileSpacing = 'compact';
-    tl.Padding = 'compact';
-    title(tl,{titulo;subtitulo});        % Título mestre da figura
-    xlabel(tl,'Posição Horizontal - m'); % Texto do eixo x
-    ylabel(tl,'Posição Vertical - m');   % Texto do eixo y
-
-    ax1 = nexttile;                                  % Grafico da medição do sistema não-linear
-    title(strcat(titulo1,char(160),char(8658),char(160),'ci =',char(160),ci1));   % Título do grafico 1
-    ax2 = nexttile;                                  % Grafico do EKF
-    title(strcat(titulo2,char(160),char(8658),char(160),'ci =',char(160),ci2));   % Título do gráfico 2
-    ax3 = nexttile;                                  % Grafico da medição do sistema linear
-    title(strcat(titulo3,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 3
-    ax4 = nexttile;                                  % Grafico do KF
-    title(strcat(titulo4,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 3
     
-    for i = 1:length(y1)                              % Loop até o tamanho de maior
+elseif qtd == 3
+    f.Position = [100 200 1100 400]; 
+    tl1 = tiledlayout(1,3);           % Layout para um sistemas
+    tl1.TileSpacing = 'compact';      % Diminui o espaço entre os gráficos
+    tl1.Padding = 'compact';          % Diminui o espaço ao redor dos gráficos
+    title(tl1,{titulo;subtitulo});        % Título do gráfico 1
+    xlabel(tl1,'Posição Horizontal - m'); % Texto do eixo x
+    ylabel(tl1,'Posição Vertical - m');   % Texto do eixo y
+    ax1 = nexttile;                                  % Gráfico da medição do sistema não-linear
+    title(strcat(titulo1,char(160),char(8658),char(160),'ci =',char(160),ci1));   % Título do grafico 1
+    ax2 = nexttile;                                  % Gráfico da esperança não-linear
+    title(strcat(titulo2,char(160),char(8658),char(160),'ci =',char(160),ci2));   % Título do gráfico 2
+    ax3 = nexttile;                                  % Gráfico do EKF
+    title(strcat(titulo3,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 2
+    
+     for i = 1:length(y1)                             % Loop até o tamanho de maior
             if isgraphics(ax1)                        % Verifica de ax1 é válido
                 cla(ax1);                             % Limpa a figura anterior
                 hold(ax1,'on');                       % Retém o gráfico corrente
                 axis(ax1,limites_grafico);            % Define os eixos x e y
                 grid(ax1,'on');                       % Habilita a grade
-                p1 = plot(ax1,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax1,'Position',[limites_grafico(1,1),-0.2,abs(limites_grafico(1,1))+abs(limites_grafico(1,2)),0.1],'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                plot(ax1,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax1,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
                 rectangle(ax1,'Position',[y1(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
                 hold(ax1,'off');                      % Retém o gráfico corrente
             end
@@ -169,28 +166,85 @@ elseif ~isempty(y2) & ~isempty(y3) & ~isempty(y2) & ~isempty(y4) % Se a animaç�
                 hold(ax2,'on');                       % Retém o gráfico corrente
                 axis(ax2,limites_grafico);            % Define os eixos x e y             
                 grid(ax2,'on');                       % Habilita a grade
-                p3 = plot(ax2,[y2(i,1), y2(i,1)+lh*sin(y2(i,2))], [0, lh*cos(y2(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax2,'Position',[limites_grafico(1,1),-0.2,abs(limites_grafico(1,1))+abs(limites_grafico(1,2)),0.1],'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                plot(ax2,[y2(i,1), y2(i,1)+lh*sin(y2(i,2))], [0, lh*cos(y2(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax2,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
                 rectangle(ax2,'Position',[y2(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
                 hold(ax2,'off');                      % Libera o gráfico corrente
             end
-            if isgraphics(ax3)                        % Continua animando o maior e para o menor e verifica se ax3 ainda é válido
+            if  isgraphics(ax3)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
                 cla(ax3);                             % Limpa a figura anterior
                 hold(ax3,'on');                       % Retém o gráfico corrente
                 axis(ax3,limites_grafico);            % Define os eixos x e y             
                 grid(ax3,'on');                       % Habilita a grade
-                p3 = plot(ax3,[y3(i,1), y3(i,1)+lh*sin(y3(i,2))], [0, lh*cos(y3(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax3,'Position',[limites_grafico(1,1),-0.2,abs(limites_grafico(1,1))+abs(limites_grafico(1,2)),0.1],'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                plot(ax3,[y3(i,1), y3(i,1)+lh*sin(y3(i,2))], [0, lh*cos(y3(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax3,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
                 rectangle(ax3,'Position',[y3(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
                 hold(ax3,'off');                      % Libera o gráfico corrente
             end
-            if isgraphics(ax4)                        % Continua animando o maior e para o menor e verifica se ax3 ainda é válido
+            drawnow();                                % Atualiza a figura com os dados anteriores                               
+            if ~isempty(gcf) & gravar                 % Verifica se a figura é válida e se gravar = 1 (true)
+                F(i) = getframe(gcf);                 % Obtém a imagem da figura corrente
+                writeVideo(video,F(i));               % Armazena a imagem
+            end
+        end
+
+    
+elseif qtd == 4
+    f.Position = [250 50 850 620]; 
+    tl1 = tiledlayout(2,2);           % Layout para um sistemas
+    tl1.TileSpacing = 'compact';      % Diminui o espaço entre os gráficos
+    tl1.Padding = 'compact';          % Diminui o espaço ao redor dos gráficos
+    %title(tl1,{titulo;subtitulo});       % Título do gráfico 1
+    xlabel(tl1,'Posição Horizontal - m'); % Texto do eixo x
+    ylabel(tl1,'Posição Vertical - m');   % Texto do eixo y
+    ax1 = nexttile;                                  % Gráfico da medição do sistema não-linear
+    title(strcat(titulo1,char(160),char(8658),char(160),'ci =',char(160),ci1));   % Título do grafico 1
+    ax2 = nexttile;                                  % Gráfico da esperança não-linear
+    title(strcat(titulo2,char(160),char(8658),char(160),'ci =',char(160),ci2));   % Título do gráfico 2
+    ax3 = nexttile;                                  % Gráfico do EKF
+    title(strcat(titulo3,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 3
+    ax4 = nexttile;                                  % Gráfico do EKF
+    title(strcat(titulo4,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 4
+
+    
+     for i = 1:length(y1)                               % Loop até o tamanho de maior
+            if isgraphics(ax1)                        % Verifica de ax1 é válido
+                cla(ax1);                             % Limpa a figura anterior
+                hold(ax1,'on');                       % Retém o gráfico corrente
+                axis(ax1,limites_grafico);            % Define os eixos x e y
+                grid(ax1,'on');                       % Habilita a grade
+                plot(ax1,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax1,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax1,'Position',[y1(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                hold(ax1,'off');                      % Retém o gráfico corrente
+            end
+            if  isgraphics(ax2)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
+                cla(ax2);                             % Limpa a figura anterior
+                hold(ax2,'on');                       % Retém o gráfico corrente
+                axis(ax2,limites_grafico);            % Define os eixos x e y             
+                grid(ax2,'on');                       % Habilita a grade
+                plot(ax2,[y2(i,1), y2(i,1)+lh*sin(y2(i,2))], [0, lh*cos(y2(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax2,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax2,'Position',[y2(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                hold(ax2,'off');                      % Libera o gráfico corrente
+            end
+            if  isgraphics(ax3)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
+                cla(ax3);                             % Limpa a figura anterior
+                hold(ax3,'on');                       % Retém o gráfico corrente
+                axis(ax3,limites_grafico);            % Define os eixos x e y             
+                grid(ax3,'on');                       % Habilita a grade
+                plot(ax3,[y3(i,1), y3(i,1)+lh*sin(y3(i,2))], [0, lh*cos(y3(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax3,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax3,'Position',[y3(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                hold(ax3,'off');                      % Libera o gráfico corrente
+            end
+            if  isgraphics(ax4)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
                 cla(ax4);                             % Limpa a figura anterior
                 hold(ax4,'on');                       % Retém o gráfico corrente
                 axis(ax4,limites_grafico);            % Define os eixos x e y             
                 grid(ax4,'on');                       % Habilita a grade
-                p3 = plot(ax4,[y4(i,1), y4(i,1)+lh*sin(y4(i,2))], [0, lh*cos(y4(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax4,'Position',[limites_grafico(1,1),-0.2,abs(limites_grafico(1,1))+abs(limites_grafico(1,2)),0.1],'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                plot(ax4,[y4(i,1), y4(i,1)+lh*sin(y4(i,2))], [0, lh*cos(y4(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax4,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
                 rectangle(ax4,'Position',[y4(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
                 hold(ax4,'off');                      % Libera o gráfico corrente
             end
@@ -199,8 +253,101 @@ elseif ~isempty(y2) & ~isempty(y3) & ~isempty(y2) & ~isempty(y4) % Se a animaç�
                 F(i) = getframe(gcf);                 % Obtém a imagem da figura corrente
                 writeVideo(video,F(i));               % Armazena a imagem
             end
-        end                                         
+        end
+
+
+elseif qtd == 6
+    f.Position = [100 50 1100 620];
+    tl1 = tiledlayout(2,3);           % Layout para um sistemas
+    tl1.TileSpacing = 'compact';      % Diminui o espaço entre os gráficos
+    tl1.Padding = 'compact';          % Diminui o espaço ao redor dos gráficos
+    title(tl1,{titulo;subtitulo});        % Título do gráfico 1
+    xlabel(tl1,'Posição Horizontal - m'); % Texto do eixo x
+    ylabel(tl1,'Posição Vertical - m');   % Texto do eixo y
+    ax1 = nexttile;                                  % Gráfico da medição do sistema não-linear
+    title(strcat(titulo1,char(160),char(8658),char(160),'ci =',char(160),ci1));   % Título do grafico 1
+    ax2 = nexttile;                                  % Gráfico da esperança não-linear
+    title(strcat(titulo2,char(160),char(8658),char(160),'ci =',char(160),ci2));   % Título do gráfico 2
+    ax3 = nexttile;                                  % Gráfico do EKF
+    title(strcat(titulo3,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 3
+    ax4 = nexttile;                                  % Gráfico do EKF
+    title(strcat(titulo4,char(160),char(8658),char(160),'ci =',char(160),ci1));   % Título do gráfico 4
+    ax5 = nexttile;                                  % Gráfico do EKF
+    title(strcat(titulo5,char(160),char(8658),char(160),'ci =',char(160),ci2));   % Título do gráfico 3
+    ax6 = nexttile;                                  % Gráfico do EKF
+    title(strcat(titulo6,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 4
+
+    
+     for i = 1:length(y1)                               % Loop até o tamanho de maior
+            if isgraphics(ax1)                        % Verifica de ax1 é válido
+                cla(ax1);                             % Limpa a figura anterior
+                hold(ax1,'on');                       % Retém o gráfico corrente
+                axis(ax1,limites_grafico);            % Define os eixos x e y
+                grid(ax1,'on');                       % Habilita a grade
+                plot(ax1,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax1,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax1,'Position',[y1(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                hold(ax1,'off');                      % Retém o gráfico corrente
+            end
+            if  isgraphics(ax2)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
+                cla(ax2);                             % Limpa a figura anterior
+                hold(ax2,'on');                       % Retém o gráfico corrente
+                axis(ax2,limites_grafico);            % Define os eixos x e y             
+                grid(ax2,'on');                       % Habilita a grade
+                plot(ax2,[y2(i,1), y2(i,1)+lh*sin(y2(i,2))], [0, lh*cos(y2(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax2,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax2,'Position',[y2(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                hold(ax2,'off');                      % Libera o gráfico corrente
+            end
+            if  isgraphics(ax3)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
+                cla(ax3);                             % Limpa a figura anterior
+                hold(ax3,'on');                       % Retém o gráfico corrente
+                axis(ax3,limites_grafico);            % Define os eixos x e y             
+                grid(ax3,'on');                       % Habilita a grade
+                plot(ax3,[y3(i,1), y3(i,1)+lh*sin(y3(i,2))], [0, lh*cos(y3(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax3,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax3,'Position',[y3(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                hold(ax3,'off');                      % Libera o gráfico corrente
+            end
+            if  isgraphics(ax4)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
+                cla(ax4);                             % Limpa a figura anterior
+                hold(ax4,'on');                       % Retém o gráfico corrente
+                axis(ax4,limites_grafico);            % Define os eixos x e y             
+                grid(ax4,'on');                       % Habilita a grade
+                plot(ax4,[y4(i,1), y4(i,1)+lh*sin(y4(i,2))], [0, lh*cos(y4(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax4,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax4,'Position',[y4(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                hold(ax4,'off');                      % Libera o gráfico corrente
+            end
+             if  isgraphics(ax5)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
+                cla(ax5);                             % Limpa a figura anterior
+                hold(ax5,'on');                       % Retém o gráfico corrente
+                axis(ax5,limites_grafico);            % Define os eixos x e y             
+                grid(ax5,'on');                       % Habilita a grade
+                plot(ax5,[y5(i,1), y5(i,1)+lh*sin(y5(i,2))], [0, lh*cos(y5(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax5,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax5,'Position',[y5(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                hold(ax5,'off');                      % Libera o gráfico corrente
+            end
+            if  isgraphics(ax6)                       % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
+                cla(ax6);                             % Limpa a figura anterior
+                hold(ax6,'on');                       % Retém o gráfico corrente
+                axis(ax6,limites_grafico);            % Define os eixos x e y             
+                grid(ax6,'on');                       % Habilita a grade
+                plot(ax6,[y6(i,1), y6(i,1)+lh*sin(y6(i,2))], [0, lh*cos(y6(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax6,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax6,'Position',[y6(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                hold(ax6,'off');                      % Libera o gráfico corrente
+            end
+            drawnow();                                % Atualiza a figura com os dados anteriores                               
+            if ~isempty(gcf) & gravar                 % Verifica se a figura é válida e se gravar = 1 (true)
+                F(i) = getframe(gcf);                 % Obtém a imagem da figura corrente
+                writeVideo(video,F(i));               % Armazena a imagem
+            end
+        end
+
 end
+    
 %% Fecha o arquivo de vídeo
 if gravar % Se gravar = 1 (true)
     close(video);
