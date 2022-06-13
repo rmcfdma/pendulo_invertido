@@ -32,9 +32,9 @@ w_carrinho = 0.061; % comprimento
 
 
 %% 5 - Condições Iniciais.
-ci  = [0 0 pi/180 0];   % Condições iniciais do sistema
-ci2 = [0 0 pi/180 0];   % Condições iniciais do estimador de estados 1
-ci3 = [0 0 pi/180 0];   % Condições iniciais do estimador de estados 2
+ci  = [0 0 pi/6 0];   % Condições iniciais do sistema
+ci2 = [0 0 pi/6 0];   % Condições iniciais do estimador de estados 1
+ci3 = [0 0 pi/6 0];   % Condições iniciais do estimador de estados 2
 
 %% 6 - Equações de Estados Não-Lineares.
 f = [x(2);
@@ -238,14 +238,15 @@ omega_s_escolhido = 40*omega_bw1;% Valor escolhido para a frequancia de amostrag
 dt_max = (2*pi)/(omega_s_min);     % Período de amostragem máximo usual
 dt_min = (2*pi)/(omega_s_max);     % Período de amostragem mínimo usual
 dt_escolhido = (2*pi)/(omega_s_escolhido);   % Príodo de amostragem escolhido
-%  dt = dt_simulacao;               % Período de amostragem escolhido para as simulações
-dt = dt_animacao;                  % Período de amostragem escolhido para as animações
+
+dt = dt_simulacao;              % Período de amostragem escolhido para as simulações
+% dt = dt_animacao;                  % Período de amostragem escolhido para as animações
 
 %% 25 - Definindo os parâmetros probabilísticos.
 
 % Variância
 sigma_quadrado_w = 0.005;            % Covariância do ruído do sistema
-sigma_quadrado_v = 0.5;            % Covariância do ruído dos sensores
+sigma_quadrado_v = 0.005;            % Covariância do ruído dos sensores
 
 sigma_quadrado_w_Q = 0.005;          % Variância da incerteza do processo
 sigma_quadrado_v_R = 0.005;          % Variância da incerteza da medição
@@ -267,8 +268,8 @@ Px = diag(P);                        % Criando o vetor acumulador de diagonal pr
 Px2 = diag(P2);                      % Criando o vetor acumulador de diagonal principal das matrizes covariância
 
 % Matrizes de Incertezas
-Q_w = dt_simulacao*(sigma_w_Q^2*eye(4,4));     % Matriz de incertezas do processo
-Q_v = ((sigma_v_R^2*eye(2,2))/dt_simulacao);   % Matriz de incertezas da medição
+Q_w = dt*(sigma_w_Q^2*eye(4,4));     % Matriz de incertezas do processo
+Q_v = ((sigma_v_R^2*eye(2,2))/dt);   % Matriz de incertezas da medição
 
 %% 26 - Variáveis utilizadas no Método Iterativo.
 x = ci';             % Condições iniciais
@@ -277,8 +278,20 @@ y = [x(1);x(3)];     % Inicializando o a saída
 Y = y;               % Inicializando o acumulador de saídas
 x2 = ci';            % Condições iniciais do estimador
 X2 = x2;             % Inicializando o acumulador de condições iniciais estimadas (Não utilizado)
-y2 = [x2(1);x2(3)];  % Saída do estimador (Não utilizado)
+y2 = [x2(1);x2(3)];  % Inicializando a medição
 Y2 = y2;             % Inicializando acumulador de saídas estimadas (Não utilizado)
+x3 = ci';            % Condições iniciais
+X3 = x3;             % Inicializando o acumulador de estados
+y3 = x3([1 3],1);    % Inicializando o acumulador de medições
+Y3 = y3;             % Inicializando o acumulador de saída
+x4 = ci';            % Condições iniciais
+X4 = x4;             % Inicializando o acumulador de estados
+y4 = x4([1 3],1);    % Inicializando a medição
+Y4 = y4;             % Inicializando o acumulador de medições
+u3 = -K*x3;          % Inicializando o sinal de controle
+U3 = u3;             % Inicializando o acumulador de sinal de controle
+u4 = -K*x4;          % Inicializando o sinal de controle
+U4 = u4;             % Inicializando o acumulador de sinal de controle
 xhat = ci2';         % Estado estimado
 Xhat = xhat;         % Inicializando o acumulador de estados estimados
 yhat = [xhat(1);xhat(3)];     % Saída estimada 
@@ -311,33 +324,37 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % tf = tempo_simulacao;          % Tempo final
 % % K = [0 0 0 0];               % Controle cancelado
 % opts = odeset('RelTol',1e-5);  % Erro relativo
-% [t1,x1] = ode45(@equacoes_nao_lineares,[t0 tf],ci,opts,K); % Ou -> ode45(@(t,x)equacoes_nao_lineares_lqr(t,x,K),[to tf],ci,opts);
-% u1 = -K*x1';                   % Sinal de controle
-
-% plotar_sistema(t1',x1',x1(:,[1 3])',u1',[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo)
-% animar_pendulo(x1(:,[1 3]),[],[],[],s,l,l_carrinho,h_carrinho,'','','','','nao_linear_ode45_lqr','Animação do modelo não-linear (ode45)',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(1e-05),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% [t,X] = ode45(@equacoes_nao_lineares,[t0 tf],ci,opts,K); % Ou -> ode45(@(t,x)equacoes_nao_lineares_lqr(t,x,K),[to tf],ci,opts);
+% U = -K*X';                   % Sinal de controle
+% Y = X(:,[1 3]);
+% 
+% plotar_sistema('um_com_lqr',t',X',Y',U',[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y,[],[],[],[],[],s,l,l_carrinho,h_carrinho,'ode45','','','','','','ode45_lqr','Animação do modelo não-linear.',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 28 - Simulação do sistema linearizado sem LQR (Utilizando comandos do Matlab).
 % tf = 10;                         % Tempo final
 % % K = [0 0 0 0];                 % Controle cancelado
 % sys = ss(A-B*K,B,C,D);           % Sistema em malha fechada linearizado
-% [y1,t1,x1] = initial(sys,ci,tf); % Simula o sistema linearizado
-% u1 = -K*x1';                     % Sinal de controle
-
-% plotar_sistema(t1',x1',x1(:,[1 3])',u1',[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo)
-% animar_pendulo(y1,[],[],[],s,l,l_carrinho,h_carrinho,'','','','','linear_initial_lqr','Animação do modelo linearizado (initial)',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str([ci3],4),limites_grafico,0); % Animação
+% [Y,t,X] = initial(sys,ci,tf); % Simula o sistema linearizado
+% U = -K*X';                     % Sinal de controle
+% 
+% plotar_sistema('um_com_lqr',t',X',Y',U',[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y,[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Initial','','','','','','initial_lqr','Animação do modelo linearizado.',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 29 - Simulação dos sistemas linear e não linear com LQR (Utilizando comandos do Matlab).
 % t0 = 0;                          % Tempo inicial
 % tf = tempo_simulacao;            % Tempo final
 % [t1,x1] = ode45(@equacoes_nao_lineares,[t0 tf],ci,[],K); % Simulando o sistema não linear
+% 
 % u1 = -K*x1';                     % Sinal de controle do sistem não-linear
 % sys = ss(A-B*K,B,C,D);           % Sistema em malha fechada linearizado
 % [y2,t2,x2] = initial(sys,ci,tf); % Simula o sistema linearizado
 % u2 = -K*x2';                     % Sinal de controle do sistem linearizado
+% Y = x1(:,[1 3]);
+% Y2 = y2;
 
-% plotar_sistema(t1',x1',x1(:,[1 3])',u1',t2',x2',y2',u2',[],[],[],[],[],[],[],[],[],[],espessura_linha,'Não-Linear','Linearizado','',tamanho_legenda,tamanho_titulo)
-% animar_pendulo(x1(:,[1 3]),[],x2(:,[1 3]),[],s,l,l_carrinho,h_carrinho,'Não-Linear (ode45)','','Linearizado (initial)','','initial_ode45_lqr','Animação dos modelos não-linear e linearizado',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('dois_sem_filtragem_com_lqr',t1',x1',x1(:,[1 3])',u1',t2',x2',y2',u2',[],[],[],[],[],[],[],[],[],[],espessura_linha,'Não-Linear','Linearizado','',tamanho_legenda,tamanho_titulo)
+% animar_pendulo(2,Y,Y2,[],[],[],[],s,l,l_carrinho,h_carrinho,'ode45','Initial','','','','','initial_ode45_lqr','Animação dos modelos não-linear e linearizado.',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 30 - Simulação do sistema para os diferentes valores calculados para o período de amostragem T.
 % dt = dt_nyquist;                % Período de amostragem calculado pelo Teorema de Nyquist
@@ -360,10 +377,10 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     t = [t i];                  % Acumulando o tempo
 % end
 
-% plotar_sistema(t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo)
-% animar_pendulo(Y',[],[],[],s,l,l_carrinho,h_carrinho,'','','','','linear_recursivo_lqr','Animação do modelo linearizado (recursivo)',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('um_com_lqr',t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y',[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Medido','','','','','','linearizado_recursivo_com_lqr_dt','Animação do modelo não-linear (recursivo)',Q_lqr,R_lqr,0,0,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
-%% 31 - Sistema não-linear (real e sua esperança) sem controle e (com e sem) ruído.
+%% 31 - Sistema não-linear (medido estocástico e esperança) sem controle e (com e sem) ruído.
 % f = f_h;
 % h = h_h;
 % for i = 0:dt:tempo_simulacao
@@ -384,9 +401,8 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %       v =  media + sigma_v * randn(2,1);           % Criando o ruído no no sensor
 % end
 
-% plotar_sistema(t,X,Y,U,t,X2,Y2,U2,[],[],[],[],[],[],[],[],[],[],espessura_linha,'Sistema Medido','Esperança do Sistema','',tamanho_legenda,tamanho_titulo)
-% animar_pendulo(Y',[],Y2',[],s,l,l_carrinho,h_carrinho,'Medido','','Esperança','','nao_linear_esperanca_medido_wv_lqr','Animação do modelo não-linear (recursivo)',Q_lqr,R_lqr,0,0,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
-
+% plotar_sistema('dois_sem_filtragem_com_lqr',t,X,Y,U,t,X2,Y2,U2,[],[],[],[],[],[],[],[],[],[],espessura_linha,'Medição','Esperança','',tamanho_legenda,tamanho_titulo)
+% animar_pendulo(2,Y',Y2',[],[],[],[],s,l,l_carrinho,h_carrinho,'Estocástico','Esperança','','','','','nao_linear_recursivo_medido_esperanca_com_lqr','Animação do modelo não-linear (recursivo)',Q_lqr,R_lqr,0,0,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 32 - Sistema não-linear sem controle e sem ruído.
 % f = f_h;
@@ -401,9 +417,8 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %       t = [t i];                         % Acumulando o tempo
 % end
 
-% plotar_sistema(t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],[],[],s,l,l_carrinho,h_carrinho,'','','','','nao_linear_recursivo','Animação do modelo não-linear (recursivo)',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
-
+% plotar_sistema('um_com_lqr',t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y',[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Medido','','','','','','nao_linear_recursivo_sem_lqr','Animação do modelo não-linear (recursivo).',zeros(4),0,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 33 - Sistema não-linear com controle LQR e sem ruídos.
 % f = f_h;
@@ -418,8 +433,8 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     t = [t i];                           % Acumulando o Tempo
 % end
 
-% plotar_sistema(t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],[],[],s,l,l_carrinho,h_carrinho,'','','','','nao_linear_recursivo_lqr','Animação do modelo não-linear (recursivo)',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('um_com_lqr',t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y',[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Não-Linear','','','','','','nao_linear_recursivo_com_lqr','Animação do modelo não-linear (recursivo)',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 34 - Sistema não-linear com controle LQR e com ruido apenas no sistema.
 % f = f_h;
@@ -435,9 +450,9 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     w =  media + sigma_w * randn(4,1);      % Criando um novo ruído no sistema
 %     v =  media + sigma_v * randn(2,1);      % Criando um novo ruído no no sensor     
 % end
-
-% plotar_sistema(t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],[],[],s,l,l_carrinho,h_carrinho,'','','','','nao_linear_recursivo_w_lqr','Animação do modelo não-linear (recursivo)',Q_lqr,R_lqr,0,0,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% 
+% plotar_sistema('um_com_lqr',t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y',[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Medido','','','','','','nao_linear_w_recursivo_com_lqr','Animação do modelo não-linear (Recursivo).',Q_lqr,R_lqr,0,0,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 35 - Sistema não-linear com controle LQR e com ruido no sistema e no sensor.
 % f = f_h;
@@ -453,9 +468,9 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     w =  media + sigma_w * randn(1,1);         % Criando um novo ruído no sistema
 %     v =  media + sigma_v * randn(2,1);         % Criando um novo ruído no no sensor
 % end
-
-% plotar_sistema(t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],[],[],s,l,l_carrinho,h_carrinho,'','','','','nao_linear_recursivo_w_lqr','Animação do modelo não-linear (recursivo)',Q_lqr,R_lqr,0,0,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+ 
+% plotar_sistema('um_com_lqr',t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y',[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Medido','','','','','','nao_linear_w_v_recursivo_com_lqr','Animação do modelo não-linear (Recursivo).',Q_lqr,R_lqr,0,0,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 
 %% 36 - Sistema linearizado sem controle e sem ruido.  
@@ -469,8 +484,8 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     t = [t i];                  % Acumulando o tempo
 % end
 
-% plotar_sistema(t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],[],[],s,l,l_carrinho,h_carrinho,'','','','','linearizado_recursivo','Animação do modelo linearizado (recursivo)',zeros(4),zeros(0),0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('um_com_lqr',t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y',[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Medido','','','','','','linearizado_recursivo_sem_lqr','Animação do modelo linearizado (Recursivo).',zeros(4),0,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 37 - Sistema linearizado com controle LQR e sem ruido. 
 % for i = 0:dt:tempo_simulacao
@@ -483,8 +498,8 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     t = [t i];                  % Acumulando o tempo
 % end
 
-% plotar_sistema(t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],[],[],s,l,l_carrinho,h_carrinho,'','','','','linearizado_recursivo','Animação do modelo linearizado (recursivo)',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('um_com_lqr',t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y',[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Medido','','','','','','linearizado_recursivo_lqr','Animação do modelo linearizado (Recursivo).',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 38 - Simulação dos sistemas linearizados pelo algoritmo recursivo e via rotinas do Matlab em conjunto.
 % for i = 0:dt:tempo_simulacao
@@ -502,8 +517,8 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % [Y2,t2,X2] = initial(sys,ci,tf); % Simula o sistema linearizado
 % U2 = -K*X2';                     % Sinal de controle
 
-% plotar_sistema(t,X,Y,U,t2',X2',Y2',U2',[],[],[],[],[],[],[],[],[],[],espessura_linha,'Via algoritmo recursivo','Via rotinas do Matilab','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],X2(:,[1 3]),[],s,l,l_carrinho,h_carrinho,'Linearizado (Recursivo)','','Linearizado (initial)','','linearizado_recursivo_initial_lqr','Animação do modelo linearizado',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('dois_sem_filtragem_com_lqr',t,X,Y,U,t2',X2',Y2',U2',[],[],[],[],[],[],[],[],[],[],espessura_linha,'Recursivo','Initial','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(2,Y',Y2,[],[],[],[],s,l,l_carrinho,h_carrinho,'Linearizado (Recursivo)','Linearizado (initial)','','','','','linearizado_recursivo_initial_lqr','Animação do modelo linearizado.',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 39 - Simulação dos sistemas não-lineares pelo algoritmo recursivo e via rotinas do Matlab em conjunto.
 % f = f_h;
@@ -511,24 +526,25 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % for i = 0:dt:tempo_simulacao
 %     u = -K*x;                            % Lei de controle
 %     x = x + f(u,x(2),x(3),x(4))*dt;      % Discretização diferencial pelo método de Euler Direto
-%     y = h(x(1),x(3));                    % Medição
+%     y = h(x(1),x(3));                    % Medição do sistema linearizado - recursivo
 %     X = [X x];                           % Acumulando o estado
 %     Y = [Y y];                           % Acumulando a saída
 %     U = [U u];                           % Acumulando o sinal de controle
 %     t = [t i];                           % Acumulando o tempo
 % end
-
+ 
 % t0 = 0;                        % Tempo inicial
 % tf = tempo_simulacao;          % Tempo final
 % opts = odeset('RelTol',1e-5);  % Erro relativo
 % [t2,X2] = ode45(@equacoes_nao_lineares,[t0 tf],ci,opts,K); % Ou -> ode45(@(t,x)equacoes_nao_lineares_lqr(t,x,K),[to tf],ci,opts);
 % U2 = -K*X2';                   % Sinal de controle
+% Y2 = X2(:,[1 3]);              % Medição do sistema não-linear - ode45
 
-% plotar_sistema(t,X,Y,U,t2',X2',X2(:,[1 3])',U2',[],[],[],[],[],[],[],[],[],[],espessura_linha,'Via algoritmo recursivo','Via rotinas do Matilab','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],X2(:,[1 3]),[],s,l,l_carrinho,h_carrinho,'Não-Linear (Recursivo)','','Não-Linear (ode45)','','nao_linear_recursivo_ode45_lqr','Animação do modelo não-linear',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('dois_sem_filtragem_com_lqr',t,X,Y,U,t2',X2',Y2',U2',[],[],[],[],[],[],[],[],[],[],espessura_linha,'Recursivo','ode45','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(2,Y',Y2,[],[],[],[],s,l,l_carrinho,h_carrinho,'Não-Linear (Recursivo)','Não-Linear (ode45)','','','','','nao_linear_recursivo_ode45_lqr','Animação do modelo não-linear.',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 40 - Sistema linearizado com controle LQR e com ruido aditivo no sistema.
-% for i = 0:dt:50
+% for i = 0:dt:tempo_simulacao
 %     u = -K*x;                          % Lei de controle 
 %     x = x + (A*x + B*u + w)*dt;        % Discretização diferencial pelo método de Euler Direto com ruído w 
 %     y = C*x;                           % Medição
@@ -540,8 +556,8 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
 % end
 
-% plotar_sistema(t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],[],[],s,l,l_carrinho,h_carrinho,'','','','','linearizado_recursivo_w_lqr','Animação do modelo linearizado (recursivo)',Q_lqr,R_lqr,0,0,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('um_com_lqr',t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y',[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Modelo Linearizado (Recursivo)','','','','','','linearizado_recursivo_w_lqr','Animação do modelo linearizado (recursivo)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 41 - Sistema linearizado com controle LQR e com ruido no sistema e no sensor.
 % for i = 0:dt:tempo_simulacao
@@ -556,12 +572,13 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
 % end
 
-% plotar_sistema(t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],[],[],s,l,l_carrinho,h_carrinho,'','','','','linearizado_recursivo','Animação do modelo linearizado (recursivo)',Q_lqr,R_lqr,0,0,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('um_com_lqr',t,X,Y,U,[],[],[],[],[],[],[],[],[],[],[],[],[],[],espessura_linha,'','','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(1,Y',[],[],[],[],[],s,l,l_carrinho,h_carrinho,'Modelo Linearizado (Recursivo)','','','','','','linearizado_recursivo_w_v_lqr','Animação do modelo linearizado (recursivo)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 42 - Sistemas Não-Linear e Linearizado com LQR e sem ruídos simulados em conjunto.
 % f = f_h;
 % h = h_h;
+
 % for i = 0:dt:tempo_simulacao
 %     u = -K*x;                               % Lei de controle - Linearizado
 %     u2 = -K*x2;                             % Lei de controle - Não-Linear
@@ -575,204 +592,25 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     Y2 = [Y2 y2];                           % Acumulando a saída - Não-Linear
 %     U = [U u];                              % Acumulando o sinal de controle - Linearizado
 %     U2 = [U2 u2];                           % Acumulando o sinal de controle - Não-Linear
-%     t = [t i];                              % Acumulando o tempo
-%      
+%     t = [t i];                              % Acumulando o tempo     
 %     w =  media + sigma_w * randn(4,1);      % Criando um novo ruído no sistema
 %     v =  media + sigma_v * randn(2,1);      % Criando um novo ruído no no sensor
 % end
 
-% plotar_sistema(t,X,Y,U,t,X2,Y2,U2,[],[],[],[],[],[],[],[],[],[],espessura_linha,'Linearizado','Não-Linear','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Y2',[],s,l,l_carrinho,h_carrinho,'Modelo Linearizado (Recursivo)','','Modelo Não-Linear (recursivo)','','linearizado_nao_linear_recursivo_lqr','Animação dos modelos linearizado e não-linear',Q_lqr,R_lqr,0,0,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('dois_sem_filtragem_com_lqr',t,X,Y,U,t,X2,Y2,U2,[],[],[],[],[],[],[],[],[],[],espessura_linha,'Linearizado','Não-Linear','',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(2,Y',Y2',[],[],[],[],s,l,l_carrinho,h_carrinho,'Linearizado (Recursivo)','Não-Linear (Recursivo)','','','','','linearizado_nao_linear_recursivo_lqr','Animação dos modelos linearizado e não-linear (Recursivo).',Q_lqr,R_lqr,Q_w,Q_v,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 43 - KF - Filtro de Kalman seguindo o sistema linearizado sem ruido.
 % F = expm(A*dt);                        % Matriz de transição estados
 % G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
-% 
+ 
 % for i = 0:dt:tempo_simulacao
-%     u = 0;                             % Lei de controle
-%     x = x+(A*x + B*u)*dt;              % Discretização diferencial pelo método de Euler Direto 
+%     u = 0;                             % Lei de controle do sistema estocástico - KF
+%     u2 = 0 ;                           % Lei de controle da esperança
+%     x = x + (A*x + B*u + w)*dt;        % Discretização diferencial pelo método de Euler Direto com ruído w  - KF
+%     x2 = x2 + (A*x2 + B*u2)*dt;        % Discretização diferencial pelo método de Euler Direto - Esperança 
 %     y = C*x;                           % Medição
-%     % Predição
-%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
-%     yhat = C*xhat;                     % Medição do estado predito
-%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
-%     % Resíduos
-%     S = C*P*C'+ R;                     % Resíduo da covariância
-%     yt = y - yhat;                     % Resíduo da medição
-%     % Atualização   
-%     L = P*C'*inv(S);                   % Ganho de Kalman
-%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
-%     yhat = C*xhat;                     % Medição do estado atualizado
-%     P = P - L*C*P;                     % Equação de atualização da covariância
-%     % Acumuladores
-%     X = [X x];                         % Acumulando o estado
-%     Y = [Y y];                         % Acumulando a saída não corrompida
-%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
-%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
-%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
-%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
-%     Yt = [Yt yt];                      % Acumulando o erro de medição
-%     U = [U u];                         % Acumulando a lei de controle
-%     t = [t i];                         % Acumulando o tempo diferencial
-% end
-
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','KF','','kf_sem_lqr','Animação dos modelos linearizado (Filtro de Kalman)',zeros(4),0,Q_w,Q_v,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
-
-%% 44 - KF - Filtro de Kalman seguindo o sistema linearizado com ruido no sistema.
-% F = expm(A*dt);                        % Matriz de transição estados
-% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
-% 
-% for i = 0:dt:tempo_simulacao
-%     u = 0;                             % Lei de controle
-%     x = x+(A*x + B*u + w)*dt;          % Discretização diferencial pelo método de Euler Direto com ruído w 
-%     y = C*x;                           % Medição
-%     % Predição
-%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
-%     yhat = C*xhat;                     % Medição do estado predito
-%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
-%     % Resíduos
-%     S = C*P*C'+ R;                     % Resíduo da covariância
-%     yt = y - yhat;                     % Resíduo da medição
-%     % Atualização   
-%     L = P*C'*inv(S);                   % Ganho de Kalman
-%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
-%     yhat = C*xhat;                     % Medição do estado atualizado
-%     P = P - L*C*P;                     % Equação de atualização da covariância
-%     % Acumuladores
-%     X = [X x];                         % Acumulando o estado
-%     Y = [Y y];                         % Acumulando a saída não corrompida
-%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
-%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
-%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
-%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
-%     Yt = [Yt yt];                      % Acumulando o erro de medição
-%     U = [U u];                         % Acumulando a lei de controle
-%     t = [t i];                         % Acumulando o tempo diferencial
-%     w =  media + sigma_w * randn(4,1); % Criando um novo ruído no sistema
-%     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
-% end
-
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','KF','','kf_w_sem_lqr','Animação dos modelos linearizado (Filtro de Kalman)',zeros(4),0,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
-
-%% 45 - KF - Filtro de Kalman seguindo o sistema linearizado com ruido no sistema e no sensor.
-% F = expm(A*dt);                        % Matriz de transição estados
-% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
-% for i = 0:dt:tempo_simulacao
-%     u = 0;                             % Lei de controle
-%     x = x+(A*x + B*u + w)*dt;          % Discretização diferencial pelo método de Euler Direto com ruído w 
-%     y = C*x + v;                       % Medição com ruído v
-%     % Predição
-%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
-%     yhat = C*xhat;                     % Medição do estado predito
-%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
-%     % Resíduos
-%     S = C*P*C'+ R;                     % Resíduo da covariância
-%     yt = y - yhat;                     % Resíduo da medição
-%     % Atualização   
-%     L = P*C'*inv(S);                   % Ganho de Kalman
-%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
-%     yhat = C*xhat;                     % Medição do estado atualizado
-%     P = P - L*C*P;                     % Equação de atualização da covariância
-%     % Acumuladores
-%     X = [X x];                         % Acumulando o estado
-%     Y = [Y y];                         % Acumulando a saída não corrompida
-%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
-%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
-%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
-%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
-%     Yt = [Yt yt];                      % Acumulando o erro de medição
-%     U = [U u];                         % Acumulando a lei de controle
-%     t = [t i];                         % Acumulando o tempo diferencial
-%     w =  media + sigma_w * randn(4,1); % Criando um novo ruído no sistema
-%     v =  media + sigma_v* randn(2,1);  % Criando um novo ruído no no sensor
-% end
-
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','KF','','kf_w_v_sem_lqr','Animação do modelo linearizado (Filtro de Kalman)',zeros(4),0,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
-
-%% 46 - LQG (Filtro de Kalman + LQR) sem ruído.
-
-% F = expm(A*dt);                        % Matriz de transição estados
-% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
-
-% for i = 0:dt:tempo_simulacao
-%     u = -K*xhat;                       % Lei de controle
-%     x = x+(A*x + B*u)*dt;              % Discretização diferencial pelo método de Euler Direto
-%     y = C*x;                           % Medição
-%     % Predição
-%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
-%     yhat = C*xhat;                     % Medição do estado predito
-%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
-%     % Resíduos
-%     S = C*P*C'+ R;                     % Resíduo da covariância
-%     yt = y - yhat;                     % Resíduo da medição
-%     % Atualização   
-%     L = P*C'*inv(S);                   % Ganho de Kalman
-%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
-%     yhat = C*xhat;                     % Medição do estado atualizado
-%     P = P - L*C*P;                     % Equação de atualização da covariância
-%     % Acumuladores
-%     X = [X x];                         % Acumulando o estado
-%     Y = [Y y];                         % Acumulando a saída não corrompida
-%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
-%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
-%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
-%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
-%     Yt = [Yt yt];                      % Acumulando o erro de medição
-%     U = [U u];                         % Acumulando a lei de controle
-%     t = [t i];                         % Acumulando o tempo diferencial
-% end
-
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','KF','','lqg_sem_ruidos','Animação do modelo linearizado (Filtro de Kalman)',Q_lqr,R_lqr,Q_w,Q_v,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
-
-%% 47 - LQG (Filtro de Kalman + LQR) com ruído no sistema.
-% F = expm(A*dt);                        % Matriz de transição estados
-% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
-% 
-% for i = 0:dt:tempo_simulacao
-%     u = -K*xhat;                       % Lei de controle
-%     x = x+(A*x + B*u + w)*dt;          % Discretização diferencial pelo método de Euler Direto com ruído w
-%     y = C*x;                           % Medição
-%     % Predição
-%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
-%     yhat = C*xhat;                     % Medição do estado predito
-%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
-%     % Resíduos
-%     S = C*P*C'+ R;                     % Resíduo da covariância
-%     yt = y - yhat;                     % Resíduo da medição
-%     % Atualização   
-%     L = P*C'*inv(S);                   % Ganho de Kalman
-%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
-%     yhat = C*xhat;                     % Medição do estado atualizado
-%     P = P - L*C*P;                     % Equação de atualização da covariância
-%     % Acumuladores
-%     X = [X x];                         % Acumulando o estado
-%     Y = [Y y];                         % Acumulando a saída não corrompida
-%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
-%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
-%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
-%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
-%     Yt = [Yt yt];                      % Acumulando o erro de medição
-%     U = [U u];                         % Acumulando a lei de controle
-%     t = [t i];                         % Acumulando o tempo diferencial
-%     w =  media + sigma_w * randn(4,1); % Criando um novo ruído no sistema
-%     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
-% end
-
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','KF','','lqg_w','Animação do modelo linearizado (Filtro de Kalman)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
-
-%% 48 - LQG (Filtro de Kalman + LQR) com ruído no sistema e nos sensores.
-% F = expm(A*dt);                                         % Matriz de transição estados
-% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
-
-% for i = 0:dt:tempo_simulacao
-%     u = -K*xhat;                       % Lei de controle
-%     x = x + (A*x + B*u + w)*dt;        % Discretização diferencial pelo método de Euler Direto com ruído w 
-%     y = C*x + v;                       % Medição com ruído v
+%     y2 = C*x2;                         % Medição da esperança
 %     % Predição
 %     xhat  = F*xhat + G*u;              % Predição do estado estimado 
 %     yhat = C*xhat;                     % Medição do estado predito
@@ -788,28 +626,249 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     % Acumuladores
 %     X = [X x];                         % Acumulando o estado
 %     Y = [Y y];                         % Acumulando a saída não corrompida
+%     X2 = [X2 x2];                      % Acumulando o estado
+%     Y2 = [Y2 y2];                      % Acumulando a saída não corrompida
 %     Xhat = [Xhat xhat];                % Acumulando o estado estimado
 %     Yhat = [Yhat yhat];                % Acumulando a saída estimada
 %     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
 %     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
 %     Yt = [Yt yt];                      % Acumulando o erro de medição
 %     U = [U u];                         % Acumulando a lei de controle
+%     U2 = [U2 u2];                      % Acumulando a lei de controle
+%     t = [t i];                         % Acumulando o tempo diferencial
+%     w =  media + sigma_w * randn(4,1); % Criando um novo ruído no sistema
+%     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
+% end
+
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Linearizado','Esperança Linearizada','KF','','','','kf_sem_ruido','Animação do modelo linearizado (Filtro de Kalman)',zeros(4),0,Q_w,Q_v,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+
+%% 44 - KF - Filtro de Kalman seguindo o sistema linearizado com ruido no sistema.
+% F = expm(A*dt);                        % Matriz de transição estados
+% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
+ 
+% for i = 0:dt:tempo_simulacao
+%     u = 0;                             % Lei de controle do sistema estocástico - KF
+%     u2 = 0 ;                           % Lei de controle da esperança
+%     x = x + (A*x + B*u + w)*dt;        % Discretização diferencial pelo método de Euler Direto com ruído w  - KF
+%     x2 = x2 + (A*x2 + B*u2)*dt;        % Discretização diferencial pelo método de Euler Direto - Esperança 
+%     y = C*x;                           % Medição
+%     y2 = C*x2;                         % Medição da esperança
+%     % Predição
+%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
+%     yhat = C*xhat;                     % Medição do estado predito
+%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
+%     % Resíduos
+%     S = C*P*C'+ R;                     % Resíduo da covariância
+%     yt = y - yhat;                     % Resíduo da medição
+%     % Atualização   
+%     L = P*C'*inv(S);                   % Ganho de Kalman
+%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
+%     yhat = C*xhat;                     % Medição do estado atualizado
+%     P = P - L*C*P;                     % Atualização da covariância
+%     % Acumuladores
+%     X = [X x];                         % Acumulando o estado
+%     Y = [Y y];                         % Acumulando a saída não corrompida
+%     X2 = [X2 x2];                      % Acumulando o estado
+%     Y2 = [Y2 y2];                      % Acumulando a saída não corrompida
+%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
+%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
+%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
+%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
+%     Yt = [Yt yt];                      % Acumulando o erro de medição
+%     U = [U u];                         % Acumulando a lei de controle
+%     U2 = [U2 u2];                      % Acumulando a lei de controle
+%     t = [t i];                         % Acumulando o tempo diferencial
+%     w =  media + sigma_w * randn(4,1); % Criando um novo ruído no sistema
+%     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
+% end
+
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Linearizado','Esperança Linearizada','KF','','','','kf_w','Animação do modelo linearizado (Filtro de Kalman)',zeros(4),0,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+
+%% 45 - KF - Filtro de Kalman seguindo o sistema linearizado com ruido no sistema e no sensor.
+% F = expm(A*dt);                        % Matriz de transição estados
+% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
+ 
+% for i = 0:dt:tempo_simulacao
+%     u = 0;                             % Lei de controle do sistema estocástico - KF
+%     u2 = 0 ;                           % Lei de controle da esperança
+%     x = x + (A*x + B*u + w)*dt;        % Discretização diferencial pelo método de Euler Direto com ruído w  - KF
+%     x2 = x2 + (A*x2 + B*u2)*dt;        % Discretização diferencial pelo método de Euler Direto - Esperança 
+%     y = C*x + v;                       % Medição com ruído v
+%     y2 = C*x2;                         % Medição da esperança
+%     % Predição
+%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
+%     yhat = C*xhat;                     % Medição do estado predito
+%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
+%     % Resíduos
+%     S = C*P*C'+ R;                     % Resíduo da covariância
+%     yt = y - yhat;                     % Resíduo da medição
+%     % Atualização   
+%     L = P*C'*inv(S);                   % Ganho de Kalman
+%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
+%     yhat = C*xhat;                     % Medição do estado atualizado
+%     P = P - L*C*P;                     % Atualização da covariância
+%     % Acumuladores
+%     X = [X x];                         % Acumulando o estado
+%     Y = [Y y];                         % Acumulando a saída não corrompida
+%     X2 = [X2 x2];                      % Acumulando o estado
+%     Y2 = [Y2 y2];                      % Acumulando a saída não corrompida
+%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
+%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
+%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
+%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
+%     Yt = [Yt yt];                      % Acumulando o erro de medição
+%     U = [U u];                         % Acumulando a lei de controle
+%     U2 = [U2 u2];                      % Acumulando a lei de controle
+%     t = [t i];                         % Acumulando o tempo diferencial
+%     w =  media + sigma_w * randn(4,1); % Criando um novo ruído no sistema
+%     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
+% end
+
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Linearizado','Esperança Linearizada','KF','','','','kf_w_v','Animação do modelo linearizado (Filtro de Kalman)',zeros(4),0,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+
+%% 46 - LQG (Filtro de Kalman + LQR) sem ruído.
+% F = expm(A*dt);                        % Matriz de transição estados
+% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
+
+% for i = 0:dt:tempo_simulacao
+%     u = -K*xhat;                       % Lei de controle do sistema estocástico - KF
+%     u2 = -K*x2;                        % Lei de controle da esperança
+%     x = x + (A*x + B*u)*dt;        % Discretização diferencial pelo método de Euler Direto com ruído w  - KF
+%     x2 = x2 + (A*x2 + B*u2)*dt;        % Discretização diferencial pelo método de Euler Direto - Esperança 
+%     y = C*x;                           % Medição com ruído v
+%     y2 = C*x2;                         % Medição da esperança
+%     % Predição
+%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
+%     yhat = C*xhat;                     % Medição do estado predito
+%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
+%     % Resíduos
+%     S = C*P*C'+ R;                     % Resíduo da covariância
+%     yt = y - yhat;                     % Resíduo da medição
+%     % Atualização   
+%     L = P*C'*inv(S);                   % Ganho de Kalman
+%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
+%     yhat = C*xhat;                     % Medição do estado atualizado
+%     P = P - L*C*P;                     % Atualização da covariância
+%     % Acumuladores
+%     X = [X x];                         % Acumulando o estado
+%     Y = [Y y];                         % Acumulando a saída não corrompida
+%     X2 = [X2 x2];                      % Acumulando o estado
+%     Y2 = [Y2 y2];                      % Acumulando a saída não corrompida
+%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
+%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
+%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
+%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
+%     Yt = [Yt yt];                      % Acumulando o erro de medição
+%     U = [U u];                         % Acumulando a lei de controle
+%     U2 = [U2 u2];                      % Acumulando a lei de controle
+%     t = [t i];                         % Acumulando o tempo diferencial
+%     w =  media + sigma_w * randn(4,1); % Criando um novo ruído no sistema
+%     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
+% end
+
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Linearizado','Esperança Linearizada','KF','','','','lqg_sem_ruido','Animação do modelo linearizado (Filtro de Kalman)',Q_lqr,R_lqr,Q_w,Q_v,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+
+%% 47 - LQG (Filtro de Kalman + LQR) com ruído no sistema.
+% F = expm(A*dt);                        % Matriz de transição estados
+% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
+
+% for i = 0:dt:tempo_simulacao
+%     u = -K*xhat;                       % Lei de controle do sistema estocástico - KF
+%     u2 = -K*x2;                        % Lei de controle da esperança
+%     x = x + (A*x + B*u + w)*dt;        % Discretização diferencial pelo método de Euler Direto com ruído w  - KF
+%     x2 = x2 + (A*x2 + B*u2)*dt;        % Discretização diferencial pelo método de Euler Direto - Esperança 
+%     y = C*x;                           % Medição com ruído v
+%     y2 = C*x2;                         % Medição da esperança
+%     % Predição
+%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
+%     yhat = C*xhat;                     % Medição do estado predito
+%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
+%     % Resíduos
+%     S = C*P*C'+ R;                     % Resíduo da covariância
+%     yt = y - yhat;                     % Resíduo da medição
+%     % Atualização   
+%     L = P*C'*inv(S);                   % Ganho de Kalman
+%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
+%     yhat = C*xhat;                     % Medição do estado atualizado
+%     P = P - L*C*P;                     % Atualização da covariância
+%     % Acumuladores
+%     X = [X x];                         % Acumulando o estado
+%     Y = [Y y];                         % Acumulando a saída não corrompida
+%     X2 = [X2 x2];                      % Acumulando o estado
+%     Y2 = [Y2 y2];                      % Acumulando a saída não corrompida
+%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
+%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
+%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
+%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
+%     Yt = [Yt yt];                      % Acumulando o erro de medição
+%     U = [U u];                         % Acumulando a lei de controle
+%     U2 = [U2 u2];                      % Acumulando a lei de controle
+%     t = [t i];                         % Acumulando o tempo diferencial
+%     w =  media + sigma_w * randn(4,1); % Criando um novo ruído no sistema
+%     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
+% end
+
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Linearizado','Esperança Linearizada','KF','','','','lqg_w','Animação do modelo linearizado (Filtro de Kalman)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+
+%% 48 - LQG (Filtro de Kalman + LQR) com ruído no sistema e nos sensores.
+% F = expm(A*dt);                                         % Matriz de transição estados
+% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída
+
+% for i = 0:dt:tempo_simulacao
+%     u = -K*xhat;                       % Lei de controle do sistema estocástico - KF
+%     u2 = -K*x2;                        % Lei de controle da esperança
+%     x = x + (A*x + B*u + w)*dt;        % Discretização diferencial pelo método de Euler Direto com ruído w  - KF
+%     x2 = x2 + (A*x2 + B*u2)*dt;            % Discretização diferencial pelo método de Euler Direto - Esperança 
+%     y = C*x + v;                       % Medição com ruído v
+%     y2 = C*x2;                         % Medição da esperança
+%     % Predição
+%     xhat  = F*xhat + G*u;              % Predição do estado estimado 
+%     yhat = C*xhat;                     % Medição do estado predito
+%     P  = F*P*F'+ Q;                    % Predição da covariância do erro
+%     % Resíduos
+%     S = C*P*C'+ R;                     % Resíduo da covariância
+%     yt = y - yhat;                     % Resíduo da medição
+%     % Atualização   
+%     L = P*C'*inv(S);                   % Ganho de Kalman
+%     xhat = xhat + L*(yt);              % Equação da atualização do estado estimado
+%     yhat = C*xhat;                     % Medição do estado atualizado
+%     P = P - L*C*P;                     % Atualização da covariância
+%     % Acumuladores
+%     X = [X x];                         % Acumulando o estado
+%     Y = [Y y];                         % Acumulando a saída não corrompida
+%     X2 = [X2 x2];                      % Acumulando o estado
+%     Y2 = [Y2 y2];                      % Acumulando a saída não corrompida
+%     Xhat = [Xhat xhat];                % Acumulando o estado estimado
+%     Yhat = [Yhat yhat];                % Acumulando a saída estimada
+%     Px = [Px diag(P)];                 % Acumulando a covariância atualizada
+%     L_k = [L_k L];                     % Acumulando o Ganho de Kalman
+%     Yt = [Yt yt];                      % Acumulando o erro de medição
+%     U = [U u];                         % Acumulando a lei de controle
+%     U2 = [U2 u2];                      % Acumulando a lei de controle
 %     t = [t i];                         % Acumulando o tempo diferencial
 %     w =  media + sigma_w * randn(4,1); % Criando um novo ruído no sistema
 %     v =  media + sigma_v * randn(2,1); % Criando um novo ruído no no sensor
 % end
  
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','KF','','lqg_w_v','Animação do modelo linearizado (Filtro de Kalman)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Linearizado','Esperança Linearizada','KF','','','','lqg_w_v','Animação do modelo linearizado (Filtro de Kalman)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 49 - EKF (Filtro de Kalman Estendido) sem ruídos.
 % F = F_j;  % Matriz de Transição de estados
 % f = f_h;  % Equações de estados não-lineares
-% 
+
 % for i = 0:dt:tempo_simulacao   
-%     u = 0;                                 % Lei de controle  
-%     x =  x + f(u,x(2),x(3),x(4))*dt;       % Discretização diferencial pelo método de Euler Direto
-%     y = C*x;                               % Medição
+%     u = 0;                                 % Lei de controle do sistema estocástico 
+%     u2 = 0;                                % Lei de controle da esperança 
+%     x =  x + f(u,x(2),x(3),x(4))*dt;       % Discretização diferencial pelo método de Euler Direto com ruído w
+%     x2 =  x2 + f(u2,x2(2),x2(3),x2(4))*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
+%     y = C*x;                               % Medição do sistema estocástico Não-Linear
+%     y2 = C*x2;                             % Medição da esperança Não-Linear
 %     % Predição
 %     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;              % Estado predito
 %     yhat = C*xhat;                                              % Medição do estado  predito
@@ -823,67 +882,81 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     yhat = C*xhat;                         % Medição do estado atualizado
 %     P = P - L*C*P;                         % Atualização da covariância   
 %     % Acumuladores
-%     X = [X x];                             % Acumulando a esperança do sistema
-%     Y = [Y y];                             % Acumulando a medição da esperança
+%     X = [X x];                             % Acumulando o sistema estocástico
+%     Y = [Y y];                             % Acumulando a medição do sistema estocástico
+%     X2 = [X2 x2];                          % Acumulando a esperança do sistema
+%     Y2 = [Y2 y2];                          % Acumulando a medição da esperança
 %     Xhat = [Xhat xhat];                    % Acumulando a estimativa atualizada
 %     Yhat = [Yhat yhat];                    % Medição da estimativa atualizada
 %     Px = [Px diag(P)];                     % Acumulando a covariância atualizada
 %     L_k = [L_k L];                         % Acumulando o Ganho de Kalman
 %     Yt = [Yt yt];                          % Acumulando o erro de medição
-%     U = [U u];                             % Acumulando a lei de controle
-%     t = [t i];                             % Acumulando o tempo 
-% end
-
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','EKF','','ekf_sem_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',zeros(4),0,Q_w,Q_v,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
-
-%% 50 - EKF (Filtro de Kalman Estendido) com ruído aditivo no sistema.
-% F = F_j;  % Matriz de Transição de estados
-% f = f_h;  % Equações de estados não-lineares
-% 
-% for i = 0:dt:tempo_simulacao   
-%     u = 0;                                 % Lei de controle  
-%     x =  x + (f(u,x(2),x(3),x(4)) + w)*dt; % Discretização diferencial pelo método de Euler Direto
-%     y = C*x;                               % Medição
-%     % Predição
-%     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;              % Estado predito
-%     yhat = C*xhat;                                              % Medição do estado  predito
-%     P  = F(dt,u,xhat(3),xhat(4))*P*F(dt,u,xhat(3),xhat(4))'+ Q; % Cáculo da covariância 
-%     % Resíduos
-%     S = C*P*C'+R;                          % Resíduo da covariância
-%     yt = y - yhat;                         % Resíduo de medição 
-%     % Atualização
-%     L = P*C'*inv(S);                       % Ganho de Kalman
-%     xhat = xhat + L*(yt);                  % Estado Atualizado
-%     yhat = C*xhat;                         % Medição do estado atualizado
-%     P = P - L*C*P;                         % Atualização da covariância   
-%     % Acumuladores
-%     X = [X x];                             % Acumulando a esperança do sistema
-%     Y = [Y y];                             % Acumulando a medição da esperança
-%     Xhat = [Xhat xhat];                    % Acumulando a estimativa atualizada
-%     Yhat = [Yhat yhat];                    % Medição da estimativa atualizada
-%     Px = [Px diag(P)];                     % Acumulando a covariância atualizada
-%     L_k = [L_k L];                         % Acumulando o Ganho de Kalman
-%     Yt = [Yt yt];                          % Acumulando o erro de medição
-%     U = [U u];                             % Acumulando a lei de controle
+%     U = [U u];                             % Acumulando a lei de controle do sistema estocástico
+%     U2 = [U2 u2];                          % Acumulando a lei de controle da esperança
 %     t = [t i];                             % Acumulando o tempo 
 %     w =  media + sigma_w * randn(4,1);     % Criando um novo o ruído no sistema
 %     v =  media + sigma_v * randn(2,1);     % Criando um novo o ruído no no sensor
 % end
 
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','EKF','','ekf_w_sem_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',zeros(4),0,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Não-Linear','Esperança Não-Linear','EKF','','','','ekf_w_sem_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',zeros(4),0,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+
+%% 50 - EKF (Filtro de Kalman Estendido) com ruído aditivo no sistema.
+% F = F_j;  % Matriz de Transição de estados
+% f = f_h;  % Equações de estados não-lineares
+ 
+% for i = 0:dt:tempo_simulacao   
+%     u = 0;                                 % Lei de controle do sistema estocástico 
+%     u2 = 0;                                % Lei de controle da esperança 
+%     x =  x + (f(u,x(2),x(3),x(4)) + w)*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
+%     x2 =  x2 + f(u2,x2(2),x2(3),x2(4))*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
+%     y = C*x;                               % Medição do sistema estocástico Não-Linear
+%     y2 = C*x2;                             % Medição da esperança Não-Linear
+%     % Predição
+%     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;              % Estado predito
+%     yhat = C*xhat;                                              % Medição do estado  predito
+%     P  = F(dt,u,xhat(3),xhat(4))*P*F(dt,u,xhat(3),xhat(4))'+ Q; % Cáculo da covariância 
+%     % Resíduos
+%     S = C*P*C'+R;                          % Resíduo da covariância
+%     yt = y - yhat;                         % Resíduo de medição 
+%     % Atualização
+%     L = P*C'*inv(S);                       % Ganho de Kalman
+%     xhat = xhat + L*(yt);                  % Estado Atualizado
+%     yhat = C*xhat;                         % Medição do estado atualizado
+%     P = P - L*C*P;                         % Atualização da covariância   
+%     % Acumuladores
+%     X = [X x];                             % Acumulando o sistema estocástico
+%     Y = [Y y];                             % Acumulando a medição do sistema estocástico
+%     X2 = [X2 x2];                          % Acumulando a esperança do sistema
+%     Y2 = [Y2 y2];                          % Acumulando a medição da esperança
+%     Xhat = [Xhat xhat];                    % Acumulando a estimativa atualizada
+%     Yhat = [Yhat yhat];                    % Medição da estimativa atualizada
+%     Px = [Px diag(P)];                     % Acumulando a covariância atualizada
+%     L_k = [L_k L];                         % Acumulando o Ganho de Kalman
+%     Yt = [Yt yt];                          % Acumulando o erro de medição
+%     U = [U u];                             % Acumulando a lei de controle do sistema estocástico
+%     U2 = [U2 u2];                          % Acumulando a lei de controle da esperança
+%     t = [t i];                             % Acumulando o tempo 
+%     w =  media + sigma_w * randn(4,1);     % Criando um novo o ruído no sistema
+%     v =  media + sigma_v * randn(2,1);     % Criando um novo o ruído no no sensor
+% end
+
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Não-Linear','Esperança Não-Linear','EKF','','','','ekf_w_sem_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',zeros(4),0,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 51 - EKF (Filtro de Kalman Estendido) com ruidos aditivos no sistema e nos sensores.
 % F = F_j;  % Matriz de Transição de estados
 % f = f_h;  % Equações de estados não-lineares
 % 
 % for i = 0:dt:tempo_simulacao   
-%     u = 0;                                 % Lei de controle  
+%     u = 0;                                 % Lei de controle do sistema estocástico 
+%     u2 = 0;                                % Lei de controle da esperança 
 %     x =  x + (f(u,x(2),x(3),x(4)) + w)*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
-%     y = C*x + v;                           % Medição com ruído v
+%     x2 =  x2 + f(u2,x2(2),x2(3),x2(4))*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
+%     y = C*x + v;                           % Medição do sistema estocástico Não-Linear
+%     y2 = C*x2;                             % Medição da esperança Não-Linear
 %     % Predição
-%     xhat = xhat + (f(u,xhat(2),xhat(3),xhat(4))+w)*dt;          % Estado predito
+%     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;              % Estado predito
 %     yhat = C*xhat;                                              % Medição do estado  predito
 %     P  = F(dt,u,xhat(3),xhat(4))*P*F(dt,u,xhat(3),xhat(4))'+ Q; % Cáculo da covariância 
 %     % Resíduos
@@ -895,65 +968,36 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     yhat = C*xhat;                         % Medição do estado atualizado
 %     P = P - L*C*P;                         % Atualização da covariância   
 %     % Acumuladores
-%     X = [X x];                             % Acumulando a esperança do sistema
-%     Y = [Y y];                             % Acumulando a medição da esperança
+%     X = [X x];                             % Acumulando o sistema estocástico
+%     Y = [Y y];                             % Acumulando a medição do sistema estocástico
+%     X2 = [X2 x2];                          % Acumulando a esperança do sistema
+%     Y2 = [Y2 y2];                          % Acumulando a medição da esperança
 %     Xhat = [Xhat xhat];                    % Acumulando a estimativa atualizada
 %     Yhat = [Yhat yhat];                    % Medição da estimativa atualizada
 %     Px = [Px diag(P)];                     % Acumulando a covariância atualizada
 %     L_k = [L_k L];                         % Acumulando o Ganho de Kalman
 %     Yt = [Yt yt];                          % Acumulando o erro de medição
-%     U = [U u];                             % Acumulando a lei de controle
+%     U = [U u];                             % Acumulando a lei de controle do sistema estocástico
+%     U2 = [U2 u2];                          % Acumulando a lei de controle da esperança
 %     t = [t i];                             % Acumulando o tempo 
 %     w =  media + sigma_w * randn(4,1);     % Criando um novo o ruído no sistema
 %     v =  media + sigma_v * randn(2,1);     % Criando um novo o ruído no no sensor
 % end
-
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','EKF','','ekf_w_v_sem_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',zeros(4),0,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% 
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Não-Linear','Esperança Não-Linear','EKF','','','','ekf_w_v_sem_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',zeros(4),0,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 52 - EKF (Filtro de Kalman Estendido) com LQR sem ruídos. 
 % F = F_j;  % Matriz de Transição de estados
 % f = f_h;  % Equações de estados não-lineares
-% 
+ 
 % for i = 0:dt:tempo_simulacao   
-%     u = -K*xhat;                           % Lei de controle  
-%     x =  x + f(u,x(2),x(3),x(4))*dt;       % Discretização diferencial pelo método de Euler Direto
-%     y = C*x;                               % Medição
-%     % Predição
-%     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt; % Estado predito
-%     yhat = C*xhat;                                 % Medição do estado  predito
-%     P  = F(dt,u,xhat(3),xhat(4))*P*F(dt,u,xhat(3),xhat(4))'+ Q; % Cáculo da covariância 
-%     % Resíduos
-%     S = C*P*C'+R;                          % Resíduo da covariância
-%     yt = y - yhat;                         % Resíduo de medição 
-%     % Atualização
-%     L = P*C'*inv(S);                       % Ganho de Kalman
-%     xhat = xhat + L*(yt);                  % Estado Atualizado
-%     yhat = C*xhat;                         % Medição do estado atualizado
-%     P = P - L*C*P;                         % Atualização da covariância   
-%     % Acumuladores
-%     X = [X x];                             % Acumulando a esperança do sistema
-%     Y = [Y y];                             % Acumulando a medição da esperança
-%     Xhat = [Xhat xhat];                    % Acumulando a estimativa atualizada
-%     Yhat = [Yhat yhat];                    % Medição da estimativa atualizada
-%     Px = [Px diag(P)];                     % Acumulando a covariância atualizada
-%     L_k = [L_k L];                         % Acumulando o Ganho de Kalman
-%     Yt = [Yt yt];                          % Acumulando o erro de medição
-%     U = [U u];                             % Acumulando a lei de controle
-%     t = [t i];                             % Acumulando o tempo 
-% end
-
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','EKF','','ekf_com_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
-
-%% 53 - EKF (Filtro de Kalman Estendido) com LQR e com ruído no sistema.
-% F = F_j;  % Matriz de Transição de estados
-% f = f_h;  % Equações de estados não-lineares
-% 
-% for i = 0:dt:tempo_simulacao   
-%     u = -K*xhat;                           % Lei de controle  
-%     x =  x + (f(u,x(2),x(3),x(4)) + w)*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
-%     y = C*x;                               % Medição
+%     u = -K*xhat;                           % Lei de controle do sistema estocástico 
+%     u2 = -K*x2;                            % Lei de controle da esperança 
+%     x =  x + (f(u,x(2),x(3),x(4)))*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
+%     x2 =  x2 + f(u2,x2(2),x2(3),x2(4))*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
+%     y = C*x;                               % Medição do sistema estocástico Não-Linear
+%     y2 = C*x2;                             % Medição da esperança Não-Linear
 %     % Predição
 %     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;              % Estado predito
 %     yhat = C*xhat;                                              % Medição do estado  predito
@@ -967,30 +1011,36 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     yhat = C*xhat;                         % Medição do estado atualizado
 %     P = P - L*C*P;                         % Atualização da covariância   
 %     % Acumuladores
-%     X = [X x];                             % Acumulando a esperança do sistema
-%     Y = [Y y];                             % Acumulando a medição da esperança
+%     X = [X x];                             % Acumulando o sistema estocástico
+%     Y = [Y y];                             % Acumulando a medição do sistema estocástico
+%     X2 = [X2 x2];                          % Acumulando a esperança do sistema
+%     Y2 = [Y2 y2];                          % Acumulando a medição da esperança
 %     Xhat = [Xhat xhat];                    % Acumulando a estimativa atualizada
 %     Yhat = [Yhat yhat];                    % Medição da estimativa atualizada
 %     Px = [Px diag(P)];                     % Acumulando a covariância atualizada
 %     L_k = [L_k L];                         % Acumulando o Ganho de Kalman
 %     Yt = [Yt yt];                          % Acumulando o erro de medição
-%     U = [U u];                             % Acumulando a lei de controle
+%     U = [U u];                             % Acumulando a lei de controle do sistema estocástico
+%     U2 = [U2 u2];                          % Acumulando a lei de controle da esperança
 %     t = [t i];                             % Acumulando o tempo 
 %     w =  media + sigma_w * randn(4,1);     % Criando um novo o ruído no sistema
 %     v =  media + sigma_v * randn(2,1);     % Criando um novo o ruído no no sensor
 % end
 
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','EKF','','ekf_w_com_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Não-Linear','Esperança Não-Linear','EKF','','','','ekf_com_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
-%% 54 - EKF (Filtro de Kalman Estendido) com LQR e ruídos no sistema e no sensor.
+%% 53 - EKF (Filtro de Kalman Estendido) com LQR e com ruído no sistema.
 % F = F_j;  % Matriz de Transição de estados
 % f = f_h;  % Equações de estados não-lineares
-% 
+
 % for i = 0:dt:tempo_simulacao   
-%     u = -K*xhat;                           % Lei de controle  
+%     u = -K*xhat;                           % Lei de controle do sistema estocástico 
+%     u2 = -K*x2;                            % Lei de controle da esperança 
 %     x =  x + (f(u,x(2),x(3),x(4)) + w)*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
-%     y = C*x + v;                           % Medição com ruído v
+%     x2 =  x2 + f(u2,x2(2),x2(3),x2(4))*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
+%     y = C*x;                               % Medição do sistema estocástico Não-Linear
+%     y2 = C*x2;                             % Medição da esperança Não-Linear
 %     % Predição
 %     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;              % Estado predito
 %     yhat = C*xhat;                                              % Medição do estado  predito
@@ -1004,21 +1054,67 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     yhat = C*xhat;                         % Medição do estado atualizado
 %     P = P - L*C*P;                         % Atualização da covariância   
 %     % Acumuladores
-%     X = [X x];                             % Acumulando a esperança do sistema
-%     Y = [Y y];                             % Acumulando a medição da esperança
+%     X = [X x];                             % Acumulando o sistema estocástico
+%     Y = [Y y];                             % Acumulando a medição do sistema estocástico
+%     X2 = [X2 x2];                          % Acumulando a esperança do sistema
+%     Y2 = [Y2 y2];                          % Acumulando a medição da esperança
 %     Xhat = [Xhat xhat];                    % Acumulando a estimativa atualizada
 %     Yhat = [Yhat yhat];                    % Medição da estimativa atualizada
 %     Px = [Px diag(P)];                     % Acumulando a covariância atualizada
 %     L_k = [L_k L];                         % Acumulando o Ganho de Kalman
 %     Yt = [Yt yt];                          % Acumulando o erro de medição
-%     U = [U u];                             % Acumulando a lei de controle
+%     U = [U u];                             % Acumulando a lei de controle do sistema estocástico
+%     U2 = [U2 u2];                          % Acumulando a lei de controle da esperança
+%     t = [t i];                             % Acumulando o tempo 
+%     w =  media + sigma_w * randn(4,1);     % Criando um novo o ruído no sistema
+%     v =  media + sigma_v * randn(2,1);     % Criando um novo o ruído no no sensor
+% end
+
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Não-Linear','Esperança Não-Linear','EKF','','','','ekf_w_com_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+
+%% 54 - EKF (Filtro de Kalman Estendido) com LQR e ruídos no sistema e no sensor.
+% F = F_j;  % Matriz de Transição de estados
+% f = f_h;  % Equações de estados não-lineares
+ 
+% for i = 0:dt:tempo_simulacao   
+% u = -K*xhat;                               % Lei de controle do sistema estocástico 
+%     u2 = -K*x2;                            % Lei de controle da esperança 
+%     x =  x + (f(u,x(2),x(3),x(4)) + w)*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
+%     x2 =  x2 + f(u2,x2(2),x2(3),x2(4))*dt; % Discretização diferencial pelo método de Euler Direto com ruído w
+%     y = C*x + v;                           % Medição do sistema estocástico Não-Linear
+%     y2 = C*x2;                             % Medição da esperança Não-Linear
+%     % Predição
+%     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;              % Estado predito
+%     yhat = C*xhat;                                              % Medição do estado  predito
+%     P  = F(dt,u,xhat(3),xhat(4))*P*F(dt,u,xhat(3),xhat(4))'+ Q; % Cáculo da covariância 
+%     % Resíduos
+%     S = C*P*C'+R;                          % Resíduo da covariância
+%     yt = y - yhat;                         % Resíduo de medição 
+%     % Atualização
+%     L = P*C'*inv(S);                       % Ganho de Kalman
+%     xhat = xhat + L*(yt);                  % Estado Atualizado
+%     yhat = C*xhat;                         % Medição do estado atualizado
+%     P = P - L*C*P;                         % Atualização da covariância   
+%     % Acumuladores
+%     X = [X x];                             % Acumulando o sistema estocástico
+%     Y = [Y y];                             % Acumulando a medição do sistema estocástico
+%     X2 = [X2 x2];                          % Acumulando a esperança do sistema
+%     Y2 = [Y2 y2];                          % Acumulando a medição da esperança
+%     Xhat = [Xhat xhat];                    % Acumulando a estimativa atualizada
+%     Yhat = [Yhat yhat];                    % Medição da estimativa atualizada
+%     Px = [Px diag(P)];                     % Acumulando a covariância atualizada
+%     L_k = [L_k L];                         % Acumulando o Ganho de Kalman
+%     Yt = [Yt yt];                          % Acumulando o erro de medição
+%     U = [U u];                             % Acumulando a lei de controle do sistema estocástico
+%     U2 = [U2 u2];                          % Acumulando a lei de controle da esperança
 %     t = [t i];                             % Acumulando o tempo 
 %     w =  media + sigma_w * randn(4,1);     % Criando um novo o ruído no sistema
 %     v =  media + sigma_v * randn(2,1);     % Criando um novo o ruído no no sensor
 % end
  
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,[],Yt,Px,L_k,[],[],[],[],[],[],[],espessura_linha,'Medido','Estimado','',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',[],Yhat',[],s,l,l_carrinho,h_carrinho,'Medido','','EKF','','ekf_w_v_com_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
+% plotar_sistema('dois_com_filtragem',t,X,Y,U,t,Xhat,Yhat,[],t,X2,Y2,U2,Yt,[],Px,[],L_k,[],espessura_linha,'Medição Linear','Estimativa com KF','Esperança Linearizada',tamanho_legenda,tamanho_titulo) % Plot do sistema
+% animar_pendulo(3,Y',Y2',Yhat',[],[],[],s,l,l_carrinho,h_carrinho,'Medido Não-Linear','Esperança Não-Linear','EKF','','','','ekf_w_v_com_lqr','Animação do modelo não-linear (Filtro de Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,0); % Animação
 
 %% 55 - EKF e LQG (Filtro de Kalman Estendido e Regulador Linear Quadrático Gaussiano) sem ruídos. 
 % F = F_j;           % Matriz de Transição de estados não linear
@@ -1026,78 +1122,23 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % F2 = expm(A*dt);   % Matriz de transição estados linearizada
 % G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída linearizada
 
-
-% for i = 0:dt:tempo_simulacao   
-%     u = -K*xhat;                         % Lei de controle - EKF
-%     u2 = -K*xhat2;                       % Lei de controle - KF 
-%     x =  x + (f(u,x(2),x(3),x(4)))*dt;   % Discretização diferencial pelo método de Euler Direto - Não-Linear
-%     x2 = x2+((A*x2 + B*u2))*dt;          % Discretização diferencial pelo método de Euler Direto - Linearizado
-%     y = C*x;                             % Medição - EKF
-%     y2 = C*x2;                           % Medição - KF
-%     % Predição
-%     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;   % Estado predito - EKF
-%     xhat2  = F2*xhat2 + G*u2;                        % Estado predito - KF 
-%     yhat = C*xhat;                                   % Medição do estado  predito - EKF     
-%     yhat2 = C*xhat2;                                 % Medição do estado predito - KF
-%     P  = F(dt,u,xhat(3),xhat(4))*P*F(dt,u,xhat(3),xhat(4))'+ Q; % Predição da covariância  - EKF
-%     P2  = F2*P2*F2'+ Q;                              % Predição da covariância do erro - KF
-%     % Resíduos
-%     S = C*P*C'+R;                         % Resíduo da covariância - EKF
-%     S2 = C*P2*C'+R;                       % Resíduo da covariância - KF
-%     yt = y - yhat;                        % Resíduo de medição - EKF 
-%     yt2 = y2 - yhat2;                     % Resíduo de medição - KF 
-%     % Atualização
-%     L = P*C'*inv(S);                      % Ganho de Kalman - EKF
-%     L2 = P2*C'*inv(S2);                   % Ganho de Kalman - KF
-%     xhat = xhat + L*(yt);                 % Estado Atualizado - EKF
-%     xhat2 = xhat2 + L2*(yt2);             % Estado Atualizado - KF
-%     yhat = C*xhat;                        % Medição do estado atualizado - EKF
-%     yhat2 = C*xhat2;                      % Medição do estado atualizado - KF
-%     P = P - L*C*P;                        % Atualização da covariância - EKF 
-%     P2 = P2 - L2*C*P2;                    % Atualização da covariância - KF 
-%     %Acumuladores
-%     X = [X x];                            % Acumulando a esperança do sistema - EKF
-%     X2 = [X2 x2];                         % Acumulando a esperança do sistema - KF
-%     Y = [Y y];                            % Acumulando a medição da esperança - EKF
-%     Y2 = [Y2 y2];                         % Acumulando a medição da esperança - KF
-%     Xhat = [Xhat xhat];                   % Acumulando a estimativa atualizada - EKF
-%     Xhat2 = [Xhat2 xhat2];                % Acumulando a estimativa atualizada - KF
-%     Yhat = [Yhat yhat];                   % Medição da estimativa atualizada - EKF
-%     Yhat2 = [Yhat2 yhat2];                % Medição da estimativa atualizada - KF
-%     Px = [Px diag(P)];                    % Acumulando a covariância atualizada - EKF
-%     Px2 = [Px2 diag(P2)];                 % Acumulando a covariância atualizada - KF
-%     L_k = [L_k L];                        % Acumulando o Ganho de Kalman - EKF
-%     L_k2 = [L_k2 L2];                     % Acumulando o Ganho de Kalman - KF
-%     Yt = [Yt yt];                         % Acumulando o erro de medição - EKF
-%     Yt2 = [Yt2 yt2];                      % Acumulando o erro de medição - KF
-%     U = [U u];                            % Acumulando a lei de controle - EKF
-%     U2 = [U2 u2];                         % Acumulando a lei de controle - KF
-%     t = [t i];                            % Acumulando o tempo 
-%     w =  media + sigma_w * randn(4,1);    % Criando um novo o ruído no sistema
-%     v =  media + sigma_v * randn(2,1);    % Criando um novo o ruído no no sensor
-% end
-% 
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,U,t,Xhat2,Yhat2,U2,Yt,Yt2,Px,Px2,L_k,L_k2,espessura_linha,'Medida','EKF','KF',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',Yhat',Yhat',Yhat2',s,l,l_carrinho,h_carrinho,'Medido Não-Linear','EKF','Medido Linearizado','KF','ekf_lqr_lqg','Animação dos modelos linearizado e não-linear (Filtros de Kalman e Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,0,0,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,1); % Animação
-
-%% 56 - EKF e LQG (Filtro de Kalman Estendido e Regulador Linear Quadrático Gaussiano) com ruídos no sistema e na medição. 
-% F = F_j;           % Matriz de Transição de estados não linear
-% f = f_h;           % Equações de estados não-lineares
-% F2 = expm(A*dt);   % Matriz de transição estados linearizada
-% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída linearizada
-%  
-% 
-% for i = 0:dt:10   
+% for i = 0:dt:tempo_simulacao    
 %     u = -K*xhat;                             % Lei de controle - EKF
 %     u2 = -K*xhat2;                           % Lei de controle - KF 
-%     x =  x + (f(u,x(2),x(3),x(4)) + w)*dt;   % Discretização diferencial pelo método de Euler Direto - Não-Linear
-%     x2 = x2+((A*x2 + B*u2) + w)*dt;          % Discretização diferencial pelo método de Euler Direto - Linearizado
-%     y = C*x + v;                             % Medição - EKF
-%     y2 = C*x2 + v;                           % Medição - KF
+%     u3 = -K*x3;                              % Lei de controle - Esperança Não-Linear
+%     u4 = -K*x4;                              % Lei de controle - Esperança Linearizada 
+%     x =  x + f(u,x(2),x(3),x(4))*dt;         % Discretização da equação diferencial pelo método de Euler Direto - Não-Linear
+%     x2 = x2 + (A*x2 + B*u2)*dt;              % Discretização da equação diferencial pelo método de Euler Direto - Linearizado
+%     x3 =  x3 + f(u3,x3(2),x3(3),x3(4))*dt;   % Discretização da equação diferencial pelo método de Euler Direto - Esperança não-linear
+%     x4 = x4 + (A*x4 + B*u4)*dt;              % Discretização da equação diferencial pelo método de Euler Direto - Esperança linearizada 
+%     y = C*x;                                 % Medição - EKF
+%     y2 = C*x2;                               % Medição - KF
+%     y3 = C*x3;                               % Medição - Esperança Não-Linear
+%     y4 = C*x4;                               % Medição - Esperança Linearizada 
 %     % Predição
 %     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;   % Estado predito - EKF
 %     xhat2  = F2*xhat2 + G*u2;                        % Estado predito - KF 
-%     yhat = C*xhat;                                   % Medição do estado  predito - EKF     
+%     yhat = C*xhat;                                   % Medição do estado predito - EKF     
 %     yhat2 = C*xhat2;                                 % Medição do estado predito - KF
 %     P  = F(dt,u,xhat(3),xhat(4))*P*F(dt,u,xhat(3),xhat(4))'+ Q; % Predição da covariância  - EKF
 %     P2  = F2*P2*F2'+ Q;                              % Predição da covariância do erro - KF
@@ -1116,10 +1157,14 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     P = P - L*C*P;                        % Atualização da covariância - EKF 
 %     P2 = P2 - L2*C*P2;                    % Atualização da covariância - KF 
 %     %Acumuladores
-%     X = [X x];                            % Acumulando a esperança do sistema - EKF
-%     X2 = [X2 x2];                         % Acumulando a esperança do sistema - KF
-%     Y = [Y y];                            % Acumulando a medição da esperança - EKF
-%     Y2 = [Y2 y2];                         % Acumulando a medição da esperança - KF
+%     X = [X x];                            % Acumulando o sistema estocástico - Não-linear
+%     X2 = [X2 x2];                         % Acumulando o sistema estocástico - Linearizado
+%     X3 = [X3 x3];                         % Acumulando a esperança - Não-linear
+%     X4 = [X4 x4];                         % Acumulando a esperança - Linearizada
+%     Y = [Y y];                            % Acumulando a medição do sistema estocástico Não-Linear
+%     Y2 = [Y2 y2];                         % Acumulando a medição do sistema estocástico Linearizada
+%     Y3 = [Y3 y3];                         % Acumulando a medição da esperança Não-Linear
+%     Y4 = [Y4 y4];                         % Acumulando a medição da esperança Linearizada
 %     Xhat = [Xhat xhat];                   % Acumulando a estimativa atualizada - EKF
 %     Xhat2 = [Xhat2 xhat2];                % Acumulando a estimativa atualizada - KF
 %     Yhat = [Yhat yhat];                   % Medição da estimativa atualizada - EKF
@@ -1137,8 +1182,89 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 %     v =  media + sigma_v * randn(2,1);    % Criando um novo o ruído no no sensor
 % end
  
-% plotar_sistema(t,X,Y,U,t,Xhat,Yhat,U,t,Xhat2,Yhat2,U2,Yt,Yt2,Px,Px2,L_k,L_k2,espessura_linha,'Medida','EKF','KF',tamanho_legenda,tamanho_titulo) % Plot do sistema
-% animar_pendulo(Y',Yhat',Yhat',Yhat2',s,l,l_carrinho,h_carrinho,'Medido Não-Linear','EKF','Medido Linearizado','KF','ekf_lqr_lqg_w_v','Animação dos modelos linearizado e não-linear (Filtros de Kalman e Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,1); % Animação
+% Medição do sistema estocástico não-linear 
+% plotar_sistema('kf_ekf',t,X,Y,U,t,Xhat,Yhat,U2,t,Xhat2,Yhat2,[],Yt,Yt2,Px,Px2,L_k,L_k2,espessura_linha,'Medição do Sistema Não-Linear','EKF','KF',tamanho_legenda,tamanho_titulo) % Plot do sistema
+
+% Medição do sistema estocástico linearizado 
+% plotar_sistema('kf_ekf',t,X2,Y2,U2,t,Xhat2,Yhat2,U,t,Xhat,Yhat,[],Yt,Yt2,Px,Px2,L_k,L_k2,espessura_linha,'Medição do Sistema Linearizado','KF','EKF',tamanho_legenda,tamanho_titulo) % Plot do sistema
+
+% animar_pendulo(6,Y',Y3',Yhat',Y2',Y4',Yhat2',s,l,l_carrinho,h_carrinho,'Medido Não-Linear','Esperança Não-Linear','EKF','Medido Linearizado','Esperança Linearizada','KF','ekf_lqr_lqg','Animação dos modelos linearizado e não-linear (Filtros de Kalman e Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,1); % Animação
+
+%% 56 - EKF e LQG (Filtro de Kalman Estendido e Regulador Linear Quadrático Gaussiano) com ruídos no sistema e na medição. 
+% F = F_j;           % Matriz de Transição de estados não linear
+% f = f_h;           % Equações de estados não-lineares
+% F2 = expm(A*dt);   % Matriz de transição estados linearizada
+% G = integral(@(t) expm(A*t),0,dt,'ArrayValued',true)*B; % Matriz de transição de saída linearizada
+% 
+% for i = 0:dt:10       
+%     u = -K*xhat;                             % Lei de controle - EKF
+%     u2 = -K*xhat2;                           % Lei de controle - KF 
+%     u3 = -K*x3;                              % Lei de controle - Esperança Não-Linear
+%     u4 = -K*x4;                              % Lei de controle - Esperança Linearizada 
+%     x =  x + (f(u,x(2),x(3),x(4)) + w)*dt;   % Discretização da equação diferencial pelo método de Euler Direto - Não-Linear
+%     x2 = x2 + ((A*x2 + B*u2) + w)*dt;        % Discretização da equação diferencial pelo método de Euler Direto - Linearizado
+%     x3 =  x3 + f(u3,x3(2),x3(3),x3(4))*dt;   % Discretização da equação diferencial pelo método de Euler Direto - Esperança não-linear
+%     x4 = x4 + (A*x4 + B*u4)*dt;              % Discretização da equação diferencial pelo método de Euler Direto - Esperança linearizada 
+%     y = C*x + v;                             % Medição - EKF
+%     y2 = C*x2 + v;                           % Medição - KF
+%     y3 = C*x3;                               % Medição - Esperança Não-Linear
+%     y4 = C*x4;                               % Medição - Esperança Linearizada 
+%     % Predição
+%     xhat = xhat + f(u,xhat(2),xhat(3),xhat(4))*dt;   % Estado predito - EKF
+%     xhat2  = F2*xhat2 + G*u2;                        % Estado predito - KF 
+%     yhat = C*xhat;                                   % Medição do estado predito - EKF     
+%     yhat2 = C*xhat2;                                 % Medição do estado predito - KF
+%     P  = F(dt,u,xhat(3),xhat(4))*P*F(dt,u,xhat(3),xhat(4))'+ Q; % Predição da covariância  - EKF
+%     P2  = F2*P2*F2'+ Q;                              % Predição da covariância do erro - KF
+%     % Resíduos
+%     S = C*P*C'+R;                         % Resíduo da covariância - EKF
+%     S2 = C*P2*C'+R;                       % Resíduo da covariância - KF
+%     yt = y - yhat;                        % Resíduo de medição - EKF 
+%     yt2 = y2 - yhat2;                     % Resíduo de medição - KF 
+%     % Atualização
+%     L = P*C'*inv(S);                      % Ganho de Kalman - EKF
+%     L2 = P2*C'*inv(S2);                   % Ganho de Kalman - KF
+%     xhat = xhat + L*(yt);                 % Estado Atualizado - EKF
+%     xhat2 = xhat2 + L2*(yt2);             % Estado Atualizado - KF
+%     yhat = C*xhat;                        % Medição do estado atualizado - EKF
+%     yhat2 = C*xhat2;                      % Medição do estado atualizado - KF
+%     P = P - L*C*P;                        % Atualização da covariância - EKF 
+%     P2 = P2 - L2*C*P2;                    % Atualização da covariância - KF 
+%     %Acumuladores
+%     X = [X x];                            % Acumulando o sistema estocástico - Não-linear
+%     X2 = [X2 x2];                         % Acumulando o sistema estocástico - Linearizado
+%     X3 = [X3 x3];                         % Acumulando a esperança - Não-linear
+%     X4 = [X4 x4];                         % Acumulando a esperança - Linearizada
+%     Y = [Y y];                            % Acumulando a medição do sistema estocástico Não-Linear
+%     Y2 = [Y2 y2];                         % Acumulando a medição do sistema estocástico Linearizada
+%     Y3 = [Y3 y3];                         % Acumulando a medição da esperança Não-Linear
+%     Y4 = [Y4 y4];                         % Acumulando a medição da esperança Linearizada
+%     Xhat = [Xhat xhat];                   % Acumulando a estimativa atualizada - EKF
+%     Xhat2 = [Xhat2 xhat2];                % Acumulando a estimativa atualizada - KF
+%     Yhat = [Yhat yhat];                   % Medição da estimativa atualizada - EKF
+%     Yhat2 = [Yhat2 yhat2];                % Medição da estimativa atualizada - KF
+%     Px = [Px diag(P)];                    % Acumulando a covariância atualizada - EKF
+%     Px2 = [Px2 diag(P2)];                 % Acumulando a covariância atualizada - KF
+%     L_k = [L_k L];                        % Acumulando o Ganho de Kalman - EKF
+%     L_k2 = [L_k2 L2];                     % Acumulando o Ganho de Kalman - KF
+%     Yt = [Yt yt];                         % Acumulando o erro de medição - EKF
+%     Yt2 = [Yt2 yt2];                      % Acumulando o erro de medição - KF
+%     U = [U u];                            % Acumulando a lei de controle - EKF
+%     U2 = [U2 u2];                         % Acumulando a lei de controle - KF
+%     U3 = [U3 u3];                         % Acumulando a lei de controle - KF
+%     U4 = [U4 u4];                         % Acumulando a lei de controle - KF
+%     t = [t i];                            % Acumulando o tempo 
+%     w =  media + sigma_w * randn(4,1);    % Criando um novo o ruído no sistema
+%     v =  media + sigma_v * randn(2,1);    % Criando um novo o ruído no no sensor
+% end
+
+% Medição do sistema estocástico não-linear 
+% plotar_sistema('kf_ekf',t,X,Y,U,t,Xhat,Yhat,U2,t,Xhat2,Yhat2,[],Yt,Yt2,Px,Px2,L_k,L_k2,espessura_linha,'Medição do Sistema Não-Linear','EKF','KF',tamanho_legenda,tamanho_titulo) % Plot do sistema
+
+% Medição do sistema estocástico linearizado 
+% plotar_sistema('kf_ekf',t,X2,Y2,U2,t,Xhat2,Yhat2,U,t,Xhat,Yhat,[],Yt,Yt2,Px,Px2,L_k,L_k2,espessura_linha,'Medição do Sistema Linearizado','KF','EKF',tamanho_legenda,tamanho_titulo) % Plot do sistema
+
+% animar_pendulo(6,Y',Y3',Yhat',Y2',Y4',Yhat2',s,l,l_carrinho,h_carrinho,'Medido Não-Linear','Esperança Não-Linear','EKF','Medido Linearizado','Esperança Linearizada','KF','ekf_lqr_lqg_w_v','Animação dos modelos linearizado e não-linear (Filtros de Kalman e Kalman Estendido)',Q_lqr,R_lqr,Q_w,Q_v,sigma_quadrado_w,sigma_quadrado_v,strcat(num2str(dt),'s'),mat2str(rad2deg(ci),4),mat2str(rad2deg(ci2),4),mat2str(rad2deg(ci3),4),limites_grafico,1); % Animação
 
 %% 57 - Função Densidade de Probabilidades.
 % % Código para a criação dó grafico de uma PDF  com média mu e desvio padrão sigma
@@ -1234,4 +1360,3 @@ v =  media + sigma_v * randn(2,1); % Criando o ruído no no sensor inicial
 % ax.YTickLabel = {num2str(-4*sigma), num2str(-3*sigma),num2str(-2*sigma), num2str(-sigma), num2str(mu), num2str(sigma),num2str(2*sigma),  num2str(3*sigma), num2str(4*sigma)};% Coloca o texto nas marcações do eixo horizontal
 % ax.YLim = [-4*sigma 4*sigma];                          % Altera os valores limites do eixo vertical do gráfico
 % ax.XLim = [0 x_length];                                % Altera os valores limites do eixo horizontal do gráfico 
-
