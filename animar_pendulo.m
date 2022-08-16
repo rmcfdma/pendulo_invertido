@@ -40,7 +40,7 @@ function  animar_pendulo(qtd,y1,y2,y3,y4,y5,y6,s,l_haste,l_carrinho,h_carrinho,t
     lc = l_carrinho*s;         % Comprimento do carrinho em escala
     hc = h_carrinho*s;         % Altura do carrinho em escala
     posicao_trilho = [limites_grafico(1,1),-0.6*hc,abs(limites_grafico(1,1))+abs(limites_grafico(1,2)),0.2*hc]; % Trilho  
-    metade_trilho = 0.814/2;     % Medida da metado do trilho para configurar os limites
+    metade_trilho = 0.814/2;   % Medida da metado do trilho para configurar os limites
 
 %% Configuração do título
     variancias = strcat('\bf',char(963),char(178),'_Q \rm=',char(160),num2str(sigma_quadrado_w_Q(1,1)),',',char(160),char(160),'\bf',char(963),char(178),'_R \rm=',char(160),num2str(sigma_quadrado_v_R(1,1)),',',char(160),char(160),'\bf',char(963),char(178),'_w\rm =',char(160),num2str(sigma_quadrado_w),',',char(160),char(160),'\bf',char(963),char(178),'_v \rm=',char(160),num2str(sigma_quadrado_v));
@@ -53,7 +53,7 @@ function  animar_pendulo(qtd,y1,y2,y3,y4,y5,y6,s,l_haste,l_carrinho,h_carrinho,t
 %% Criação e abertura do arquivo de vídeo   
     if gravar                  % Se for para gravar o vídeo
         video = VideoWriter(strcat('animacao\wb_0_02\',nome_arquivo,'.mp4'),'MPEG-4'); % Cria o arquivo de video
-        video.FrameRate = 50;
+        video.FrameRate = 50;  % Quantidade de quadros po segundo (FPS)
         open(video);           % Abre o arquivo de video
     end
     
@@ -101,7 +101,7 @@ elseif qtd == 2
     t1 = linspace(0,tempo_simulacao,length(y1));     % Vetor para o relógio baseado em y2
     t2 = linspace(0,tempo_simulacao,length(y2));     % Vetor para o relógio baseado em y2
     
-    if length(y1) >= length(y2)           % No caso de 2 vetores de tamanhos diferentes especifica o maior e o menor para o de maior tamanho continuar executando enquanto o menor para 
+    if length(y1) >= length(y2)                      % No caso de 2 vetores de tamanhos diferentes especifica o maior e o menor para o de maior tamanho continuar executando enquanto o menor para 
         maior = y1;
         tmaior = t1;
         menor = y2;
@@ -119,10 +119,13 @@ elseif qtd == 2
                 axis(ax1,limites_grafico);            % Define os eixos x e y
                 grid(ax1,'on');                       % Habilita a grade
                 plot(ax1,[maior(i,1), maior(i,1)+lh*sin(maior(i,2))], [0, lh*cos(maior(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax1,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
+                rectangle(ax1,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980])                           % Carrinho
                 rectangle(ax1,'Position',[maior(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos                
+                plot(ax1, maior(i,1)+lh*sin(maior(i,2)), lh*cos(maior(i,2)), '.b', 'MarkerSize',40) % Manopla
                 hold(ax1,'off');                      % Retém o gráfico corrente
-                text(ax1,0.02,limites_grafico(1,3)+0.2,strcat('Tempo :',char(160),num2str(tmaior(1,i),2),'s')); % Relógio para gráficos com pequenos limites
+                text(ax1,0.002,limites_grafico(1,3)+0.002,strcat('Tempo :',char(160),num2str(tmaior(1,i),2),'s')); % Relógio para gráficos com pequenos limites
+                %text(ax1,metade_trilho+0.1,limites_grafico(1,3)+0.2,strcat('Tempo :',char(160),num2str(t1(1,i),2),'s')); % Relógio
+
             end
             if i <= length(menor) & isgraphics(ax2)   % Continua animando o maior e para o menor e verifica se ax2 ainda é válido
                 cla(ax2);                             % Limpa a figura anterior
@@ -131,8 +134,10 @@ elseif qtd == 2
                 grid(ax2,'on');                       % Habilita a grade
                 plot(ax2,[menor(i,1), menor(i,1)+lh*sin(menor(i,2))], [0, lh*cos(menor(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
                 rectangle(ax2,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
-                rectangle(ax2,'Position',[menor(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
-                text(ax2,0.02,limites_grafico(1,3)+0.2,strcat('Tempo :',char(160),num2str(tmenor(1,i),2),'s')); % Relógio para gráficos com pequenos limites
+                rectangle(ax2,'Position',[menor(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos                
+                plot(ax2, menor(i,1)+lh*sin(menor(i,2)),  lh*cos(menor(i,2)), '.b', 'MarkerSize',40)
+                text(ax2,0.002,limites_grafico(1,3)+0.002,strcat('Tempo :',char(160),num2str(tmenor(1,i),2),'s')); % Relógio para gráficos com pequenos limites
+                %text(ax2,metade_trilho+0.1,limites_grafico(1,3)+0.2,strcat('Tempo :',char(160),num2str(t1(1,i),2),'s')); % Relógio
                 hold(ax2,'off');                      % Libera o gráfico corrente
             end
             drawnow();                                % Atualiza a figura com os dados anteriores 
@@ -158,26 +163,27 @@ elseif qtd == 3
     t1 = linspace(0,tempo_simulacao,length(y1));     % Vetor para o relógio baseado em y2
     t2 = linspace(0,tempo_simulacao,length(y2));     % Vetor para o relógio baseado em y2
     t3 = linspace(0,tempo_simulacao,length(y3));     % Vetor para o relógio baseado em y2
-         for i = 1:length(y1)                             % Loop até o tamanho de maior
-            if isgraphics(ax1)                        % Verifica de ax1 é válido
-                cla(ax1);                             % Limpa a figura anterior
-                hold(ax1,'on');                       % Retém o gráfico corrente
-                axis(ax1,limites_grafico);            % Define os eixos x e y
-                grid(ax1,'on');                       % Habilita a grade
+         for i = 1:length(y1)                        % Loop até o tamanho de maior
+            if isgraphics(ax1)                       % Verifica de ax1 é válido
+                cla(ax1);                            % Limpa a figura anterior
+                hold(ax1,'on');                      % Retém o gráfico corrente
+                axis(ax1,limites_grafico);           % Define os eixos x e y
+                grid(ax1,'on');                      % Habilita a grade
                 plot(ax1,[y1(i,1), y1(i,1)+lh*sin(y1(i,2))], [0, lh*cos(y1(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax1,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
-                rectangle(ax1,'Position',[y1(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                rectangle(ax1,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980])               % Carrinho
+                rectangle(ax1,'Position',[y1(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta')                  % Trilhos
+                plot(ax1, y1(i,1)+lh*sin(y1(i,2)),  lh*cos(y1(i,2)), '.b', 'MarkerSize',40)               % Manopla do pêndulo
                 if (y1(i,1) == -metade_trilho + lc/2 | y1(i,1) < -metade_trilho + lc/2)   % Se o carrinho esbarra ou passa da barra lateral esquerda
                     xline(ax1,-metade_trilho,'--r',strcat('-',num2str(metade_trilho),char(160),'Limite'),'LineWidth',1,'LabelHorizontalAlignment','left','LabelOrientation','horizontal'); % Barra lateral esquerda vermelha                       
-                    xline(ax1,metade_trilho,'--k',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal'); % Barra lateral direita azul              
+                    xline(ax1,metade_trilho,'--k',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal');             % Barra lateral direita azul              
                 elseif (y1(i,1) == metade_trilho - lc/2 | y1(i,1) > metade_trilho - lc/2) % Se o carrinho  esbarra ou passa da barra lateral direita
                     xline(ax1,-metade_trilho,'--k',strcat('-',num2str(metade_trilho),char(160),'Limite'),'LineWidth',1,'LabelHorizontalAlignment','left','LabelOrientation','horizontal'); % Barra lateral esquerda azul                        
-                    xline(ax1,metade_trilho,'--r',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal'); % Barra lateral direita vermelha               
+                    xline(ax1,metade_trilho,'--r',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal');             % Barra lateral direita vermelha               
                 else                                                                      % Caso o carrinho esteja entre as duas barras tudo azul
                     xline(ax1,-metade_trilho,'--k',strcat('-',num2str(metade_trilho),char(160),'Limite'),'LineWidth',1,'LabelHorizontalAlignment','left','LabelOrientation','horizontal');                        
                     xline(ax1,metade_trilho,'--k',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal');
                 end
-                %text(ax1,0.002,limites_grafico(1,3)+0.002,strcat('Tempo :',char(160),num2str(t1(1,i),2),'s')); % Relógio para gráficos com pequenos limites
+                %text(ax1,0.002,limites_grafico(1,3)+0.002,strcat('Tempo :',char(160),num2str(t1(1,i),2),'s'));          % Relógio para gráficos com pequenos limites
                 text(ax1,metade_trilho+0.1,limites_grafico(1,3)+0.2,strcat('Tempo :',char(160),num2str(t2(1,i),2),'s')); % Relógio
                 hold(ax1,'off');                      % Retém o gráfico corrente
             end
@@ -187,8 +193,9 @@ elseif qtd == 3
                 axis(ax2,limites_grafico);            % Define os eixos x e y             
                 grid(ax2,'on');                       % Habilita a grade
                 plot(ax2,[y2(i,1), y2(i,1)+lh*sin(y2(i,2))], [0, lh*cos(y2(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax2,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
-                rectangle(ax2,'Position',[y2(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
+                rectangle(ax2,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980])               % Carrinho
+                rectangle(ax2,'Position',[y2(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta')                  % Trilhos
+                plot(ax2, y2(i,1)+lh*sin(y2(i,2)),  lh*cos(y2(i,2)), '.b', 'MarkerSize',40)               % Manopla do pêndulo
                 if (y2(i,1) == -metade_trilho + lc/2 | y2(i,1) < -metade_trilho + lc/2)   % Se o carrinho esbarra ou passa da barra lateral esquerda
                     xline(ax2,-metade_trilho,'--r',strcat('-',num2str(metade_trilho),char(160),'Limite'),'LineWidth',1,'LabelHorizontalAlignment','left','LabelOrientation','horizontal'); % Barra lateral esquerda vermelha                       
                     xline(ax2,metade_trilho,'--k',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal'); % Barra lateral direita azul              
@@ -199,7 +206,7 @@ elseif qtd == 3
                     xline(ax2,-metade_trilho,'--k',strcat('-',num2str(metade_trilho),char(160),'Limite'),'LineWidth',1,'LabelHorizontalAlignment','left','LabelOrientation','horizontal');                        
                     xline(ax2,metade_trilho,'--k',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal');
                 end
-                %text(ax2,0.002,limites_grafico(1,3)+0.002,strcat('Tempo :',char(160),num2str(t1(1,i),2),'s')); % Relógio
+                %text(ax2,0.002,limites_grafico(1,3)+0.002,strcat('Tempo :',char(160),num2str(t1(1,i),2),'s'));          % Relógio
                 text(ax2,metade_trilho+0.1,limites_grafico(1,3)+0.2,strcat('Tempo :',char(160),num2str(t2(1,i),2),'s')); % Relógio
                 hold(ax2,'off');                      % Libera o gráfico corrente
             end
@@ -208,20 +215,21 @@ elseif qtd == 3
                 hold(ax3,'on');                       % Retém o gráfico corrente
                 axis(ax3,limites_grafico);            % Define os eixos x e y             
                 grid(ax3,'on');                       % Habilita a grade
-                plot(ax3,[y3(i,1), y3(i,1)+lh*sin(y3(i,2))], [0, lh*cos(y3(i,2))],'blue','LineWidth',2);  % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
-                rectangle(ax3,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980]) % Carrinho
-                rectangle(ax3,'Position',[y3(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta') % Trilhos
-                if (y3(i,1) == -metade_trilho + lc/2 || y3(i,1) < -metade_trilho + lc/2)   % Se o carrinho esbarra ou passa da barra lateral esquerda
+                plot(ax3,[y3(i,1), y3(i,1)+lh*sin(y3(i,2))], [0, lh*cos(y3(i,2))],'blue','LineWidth',2);      % Desenha a haste apartir da posição do carrinho e ângulo da haste corrente  
+                rectangle(ax3,'Position',posicao_trilho,'FaceColor',[0.8500 0.3250 0.0980])                   % Carrinho
+                rectangle(ax3,'Position',[y3(i,1)-lc/2,-hc,lc,hc],'FaceColor','magenta')                      % Trilhos
+                plot(ax3, y3(i,1)+lh*sin(y3(i,2)),  lh*cos(y3(i,2)), '.b', 'MarkerSize',40)                   % Manopla do pêndulo
+                if (y3(i,1) == -metade_trilho + lc/2 || y3(i,1) < -metade_trilho + lc/2)                      % Se o carrinho esbarra ou passa da barra lateral esquerda
                     xline(ax3,-metade_trilho,'--r',strcat('-',num2str(metade_trilho),char(160),'Limite'),'LineWidth',1,'LabelHorizontalAlignment','left','LabelOrientation','horizontal'); % Barra lateral esquerda vermelha                       
                     xline(ax3,metade_trilho,'--k',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal'); % Barra lateral direita azul              
-                elseif (y3(i,1) == metade_trilho - lc/2 || y3(i,1) > metade_trilho - lc/2) % Se o carrinho  esbarra ou passa da barra lateral direita
+                elseif (y3(i,1) == metade_trilho - lc/2 || y3(i,1) > metade_trilho - lc/2)                    % Se o carrinho  esbarra ou passa da barra lateral direita
                     xline(ax3,-metade_trilho,'--k',strcat('-',num2str(metade_trilho),char(160),'Limite'),'LineWidth',1,'LabelHorizontalAlignment','left','LabelOrientation','horizontal'); % Barra lateral esquerda azul                        
                     xline(ax3,metade_trilho,'--r',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal'); % Barra lateral direita vermelha               
-                else                                                                      % Caso o carrinho esteja entre as duas barras tudo azul
+                else                                                                                          % Caso o carrinho esteja entre as duas barras tudo azul
                     xline(ax3,-metade_trilho,'--k',strcat('-',num2str(metade_trilho),char(160),'Limite'),'LineWidth',1,'LabelHorizontalAlignment','left','LabelOrientation','horizontal');                        
                     xline(ax3,metade_trilho,'--k',strcat('Limite +',num2str(metade_trilho)),'LineWidth',1,'LabelHorizontalAlignment','right','LabelOrientation','horizontal');
                 end
-                %text(ax3,0.002,limites_grafico(1,3)+0.002,strcat('Tempo :',char(160),num2str(t1(1,i),2),'s')); % Relógio
+                %text(ax3,0.002,limites_grafico(1,3)+0.002,strcat('Tempo :',char(160),num2str(t1(1,i),2),'s'));          % Relógio
                 text(ax3,metade_trilho+0.1,limites_grafico(1,3)+0.2,strcat('Tempo :',char(160),num2str(t3(1,i),2),'s')); % Relógio
                 hold(ax3,'off');                      % Libera o gráfico corrente
             end            
@@ -321,7 +329,7 @@ elseif qtd == 6
     title(strcat(titulo6,char(160),char(8658),char(160),'ci =',char(160),ci3));   % Título do gráfico 4
 
     
-     for i = 1:length(y1)                               % Loop até o tamanho de maior
+     for i = 1:length(y1)                             % Loop até o tamanho de maior
             if isgraphics(ax1)                        % Verifica de ax1 é válido
                 cla(ax1);                             % Limpa a figura anterior
                 hold(ax1,'on');                       % Retém o gráfico corrente
@@ -393,7 +401,7 @@ elseif qtd == 6
 end
     
 %% Fecha o arquivo de vídeo
-if gravar % Se gravar = 1 (true)
-    close(video);
+if gravar           % Se gravar = 1 (true)
+    close(video);   % Grava e fecha o arquivo  
 end
 end
