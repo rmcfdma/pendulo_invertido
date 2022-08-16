@@ -29,7 +29,7 @@ function plotar_sistema(tipo,t1,x1,y1,u1,t2,x2,y2,u2,t3,x3,y3,u3,e,e2,p,p2,L_k,L
 % v  -> Tamanho da fonte da legenda e eixo y 
 % m  -> Tamanho da fonte do título
 
-fig1 =figure(1);             % cria uma nova figura
+fig1 =figure(1);              % cria uma nova figura
 tl1 = tiledlayout(2,2);       % Layout da figura 2 linhas e 2 colunas
 tl1.TileSpacing = 'compact';  % Diminui o espaço entre os graficos
 tl1.Padding = 'compact';      % Diminui o espaço lateral dos gráficos
@@ -155,9 +155,9 @@ switch tipo
         velocidades = nexttile;                                         % Gráfico das velocidades
         p3_a = plot(velocidades,t1,x1(2,:),'LineWidth',w);              % Plot da velocidade linear do sistema 1
         hold(velocidades,'on');                                         % Retém o gráfico
-        p3_b = plot(velocidades,t1,x1(4,:),'LineWidth',w);     % Plot da velocidade angular do sistema 1 
+        p3_b = plot(velocidades,t1,x1(4,:),'LineWidth',w);              % Plot da velocidade angular do sistema 1 
         p3_c = plot(velocidades,t2,x2(2,:),'LineWidth',w);              % Plot da velocidade linear do sistema 2 
-        p3_d = plot(velocidades,t2,x2(4,:),'LineWidth',w);     % Plot da velocidade angular do sistema 2 
+        p3_d = plot(velocidades,t2,x2(4,:),'LineWidth',w);              % Plot da velocidade angular do sistema 2 
         legend(velocidades,strcat(legenda1,char(160),'- Carrinho'),strcat(legenda1,char(160),'- Haste'),strcat(legenda2,char(160),'- Carrinho'),strcat(legenda2,char(160),'- Haste'),'FontSize',v); % Legenda do gráfico
         xlabel(velocidades,'Tempo [s]','FontSize',v);                   % Texto do eixo x
         ylabel(velocidades,'Vel. Carrinho [m/s] - Haste [rad/s]','FontSize',v) % Texto do eixo y
@@ -363,11 +363,11 @@ switch tipo
              L_3 = [L_3 norm(L_k2(:,i),2)];                              % Acumula a norma das colunas ímpares de L_k2
              L_4 = [L_4 norm(L_k2(:,i+1),2)];                            % Acumula a norma das colunas pares de L_k2
          end
-         p10_a = plot(ganho_kalman,t1,L_1','LineWidth',w)           % Mostra L1 
+         p10_a = plot(ganho_kalman,t1,L_1','LineWidth',w)                % Mostra L1 
          hold(ganho_kalman,'on');                                        % Retém o gráfico
-         p10_b = plot(ganho_kalman,t1,L_2','LineWidth',w)           % Mostra L2
-         p10_c = plot(ganho_kalman,t3,L_3','--c','LineWidth',w)           % Mostra L3
-         p10_d = plot(ganho_kalman,t3,L_4','--g','LineWidth',w)                % Mostra L4
+         p10_b = plot(ganho_kalman,t1,L_2','LineWidth',w)                % Mostra L2
+         p10_c = plot(ganho_kalman,t3,L_3','--c','LineWidth',w)          % Mostra L3
+         p10_d = plot(ganho_kalman,t3,L_4','--g','LineWidth',w)          % Mostra L4
          legend('Posição do Carrinho - EKF','Ângulo da Haste - EKF','Posição do Carrinho - KF','Ângulo da Haste - KF','FontSize',v) % Legenda
          ylabel('Ganho de Kalman - Norma 2','FontSize',v);               % Texto do eixo y
          xlabel('Tempo - s');                                            % Texto do eixo x
@@ -378,12 +378,12 @@ switch tipo
          posicao_carrinho = nexttile;                                    % Gráfico da posição do carrinho
          p1_a = plot(posicao_carrinho,t1,y1(1,:),'LineWidth',w);         % Plot da posição do carrinho do sistema 1
          hold(posicao_carrinho,'on');                                    % Retém o gráfico
-         % p1_b = plot(posicao_carrinho,t2,y2(1,:)','LineWidth',w);      % Plot da posição do carrinho do sistema 2
-         p1_b = plot(posicao_carrinho,t2,y2(1,:),'-c','LineWidth',w);    % Plot da posição do carrinho do sistema 2
-         p1_b.MarkerIndices = 1:250:length(y2);
+         p1_b = plot(posicao_carrinho,t2,y2(1,:)','LineWidth',w);        % Plot da posição do carrinho do sistema 2
+         % p1_b = plot(posicao_carrinho,t2,y2(1,:),':c','LineWidth',w);  % Plot da posição do carrinho do sistema 2
+         % p1_b.MarkerIndices = 1:400:length(y2);
          % p1_c = plot(posicao_carrinho,t3,y3(1,:)','LineWidth',w);      % Plot da posição do carrinho do sistema 3
-         p1_c = plot(posicao_carrinho,t3,y3(1,:),'--r','LineWidth',w);   % Plot da posição do carrinho do sistema 2
-         p1_c.MarkerIndices = 1:250:length(y3);
+         p1_c = plot(posicao_carrinho,t3,y3(1,:),'*c','LineWidth',w);    % Plot da posição do carrinho do sistema 2
+         p1_c.MarkerIndices = 1:400:length(y3);
          legend(posicao_carrinho,legenda1,legenda2,legenda3,'FontSize',v);    % Legenda do gráfico
          xlabel(posicao_carrinho,'Tempo [s]','FontSize',v)                    % Texto do eixo x
          ylabel(posicao_carrinho,'Posição do Carrinho [m]','FontSize',v)      % Texto do eixo y
@@ -393,11 +393,12 @@ switch tipo
          angulo_haste = nexttile;                                             % Gráfico da posição angular da haste
          p2_a = plot(angulo_haste,t1,(180/pi)*y1(2,:)','LineWidth',w);        % Plot do ângulo da haste do sistema 1
          hold(angulo_haste,'on');                                             % Retém o gráfico
-         % p2_b = plot(angulo_haste,t2,(180/pi)*y2(2,:)','LineWidth',w);      % Plot do ângulo da haste do sistema 2
-         p2_b = plot(angulo_haste,t2,(180/pi)*y2(2,:)','-c','LineWidth',w);   % Plot do ângulo da haste do sistema 2
-         p2_b.MarkerIndices = 1:250:length(y2);
-         p2_c = plot(angulo_haste,t3,(180/pi)*y3(2,:)','--r','LineWidth',w);  % Plot do ângulo da haste do sistema 3
+         p2_b = plot(angulo_haste,t2,(180/pi)*y2(2,:)','LineWidth',w);        % Plot do ângulo da haste do sistema 2
+         % p2_b = plot(angulo_haste,t2,(180/pi)*y2(2,:)',':c','LineWidth',w); % Plot do ângulo da haste do sistema 2
+         % p2_b.MarkerIndices = 1:400:length(y2);
          % p2_c = plot(angulo_haste,t3,(180/pi)*y3(2,:)','LineWidth',w);      % Plot do ângulo da haste do sistema 3
+         p2_c = plot(angulo_haste,t3,(180/pi)*y3(2,:)','*c','LineWidth',w);   % Plot do ângulo da haste do sistema 3
+         p2_c.MarkerIndices = 1:400:length(y2);
          legend(angulo_haste,legenda1,legenda2,legenda3,'FontSize',v);        % Legenda do gráfico
          xlabel(angulo_haste,'Tempo [s]','FontSize',v)                        % Texto do eixo x
          ylabel(angulo_haste,strcat('Posição da Haste - [',char(176),']'),'FontSize',v) % Texto do eixo y
@@ -407,9 +408,12 @@ switch tipo
          velocidade_carrinho = nexttile;                                      % Gráfico das velocidades lineares
          p3_a = plot(velocidade_carrinho,t1,x1(2,:),'LineWidth',w);           % Plot da velocidade linear do sistema 1
          hold(velocidade_carrinho,'on');                                      % Retém o gráfico
-         p3_b = plot(velocidade_carrinho,t2,x2(2,:),'-c','LineWidth',w);      % Plot da velocidade linear do sistema 2
-         p3_c = plot(velocidade_carrinho,t3,x3(2,:),'--r','LineWidth',w);     % Plot da velocidade linear do sistema 3
-          p3_c.MarkerIndices = 1:250:length(x3);
+         p3_b = plot(velocidade_carrinho,t2,x2(2,:),'LineWidth',w);           % Plot da velocidade linear do sistema 2
+         % p3_b = plot(velocidade_carrinho,t2,x2(2,:),':c','LineWidth',w);    % Plot do ângulo da haste do sistema 3
+         % p3_b.MarkerIndices = 1:400:length(y2);
+         p3_c = plot(velocidade_carrinho,t3,x3(2,:),'LineWidth',w);           % Plot da velocidade linear do sistema 3
+         % p3_c = plot(velocidade_carrinho,t3,x3(2,:),':r','LineWidth',w);    % Plot da velocidade linear do sistema 3
+         % p3_c.MarkerIndices = 1:500:length(x3);
          legend(velocidade_carrinho,'Estocástico',legenda2,legenda3,'FontSize',v);    % Legenda do gráfico
          xlabel(velocidade_carrinho,'Tempo [s]','FontSize',v);                        % Texto do eixo x
          ylabel(velocidade_carrinho,'Velocidade do Carrinho [m/s]','FontSize',v)      % Texto do eixo y
@@ -419,9 +423,12 @@ switch tipo
          velocidade_angular = nexttile;                                               % Gráfico das velocidades
          p4_a = plot(velocidade_angular,t1,(180/pi)*x1(4,:),'LineWidth',w);           % Plot da velocidade angular do sistema 1
          hold(velocidade_angular,'on');                                               % Retém o gráfico
-         p4_b = plot(velocidade_angular,t2,(180/pi)*x2(4,:),'-c','LineWidth',w);      % Plot da velocidade angular do sistema 2
-         p4_c = plot(velocidade_angular,t3,(180/pi)*x3(4,:),'--r','LineWidth',w);     % Plot da velocidade angular do sistema 3
-         p4_c.MarkerIndices = 1:250:length(x3);
+         p4_b = plot(velocidade_angular,t2,(180/pi)*x2(4,:),'LineWidth',w);           % Plot da velocidade angular do sistema 2
+         % p4_b = plot(velocidade_angular,t2,(180/pi)*x2(4,:),':c','LineWidth',w);    % Plot do ângulo da haste do sistema 3
+         % p4_b.MarkerIndices = 1:400:length(y2);
+         p4_c = plot(velocidade_angular,t3,(180/pi)*x3(4,:),'LineWidth',w);           % Plot da velocidade angular do sistema 3
+         % p4_c = plot(velocidade_angular,t3,(180/pi)*x3(4,:),':r','LineWidth',w);    % Plot da velocidade angular do sistema 3
+         % p4_c.MarkerIndices = 1:500:length(x3);
          legend(velocidade_angular,'Estocástico',legenda2,legenda3,'FontSize',v);     % Legenda do gráfico
          xlabel(velocidade_angular,'Tempo [s]','FontSize',v);                         % Texto do eixo x
          ylabel(velocidade_angular,'Velocidade da Haste [graus/s]','FontSize',v)      % Texto do eixo y
@@ -466,21 +473,25 @@ switch tipo
          xlabel(erro_estimativa2,'Tempo [s]','FontSize',v);              % Texto do eixo x
          ylabel(erro_estimativa2,'Erro de Estimativa [saida 2]','FontSize',v); % Texto do eixo y
          grid(erro_estimativa2,'on');                                    % Libera o gráfico
-        
+         
+                
          covariancia1 = nexttile;                                        % Gráfico da covariância do filtro 1
-         p8 = plot(covariancia1,t1,p(1)',t1,p(2)',t1,p(3)','--g',t1,p(4)','--c','LineWidth',w);                    % Plot da covariância do filtro 1
+         % p8 = plot(covariancia1,t1,p','LineWidth',w);                  % Plot da covariância do filtro 1
+         p8 = plot(covariancia1,t1,p(1,:)','-b',t1,p(2,:)','-r',t1,p(3,:)','--g',t1,p(4,:)','--c','LineWidth',w);                  % Plot da covariância do filtro 1
          legend(covariancia1,'Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
          xlabel(covariancia1,'Tempo [s]','FontSize',v);                  % Texto do eixo x
          ylabel(covariancia1,'Covarância do Erro - EKF','FontSize',v);   % Texto do eixo y
          grid(covariancia1,'on');                                        % Habilita a grade
-
+         
          
          covariancia2 = nexttile;                                        % Gráfico da covariância do filtro 2
-         p9 = plot(covariancia2,t1,p2','LineWidth',w);                   % Plot da covariância do filtro 2
+         % p9 = plot(covariancia2,t1,p2','LineWidth',w);                 % Plot da covariância do filtro 1
+         p9 = plot(covariancia2,t1,p2(1,:)','-b',t1,p2(2,:)','-r',t1,p2(3,:)','--g',t1,p2(4,:)','--c','LineWidth',w); 
          legend(covariancia2,'Posição do Carrinho','Velocidade do Carrinho','Posição Angular','Velocidade Angular','FontSize',v); % Legenda do gráfico
          xlabel(covariancia2,'Tempo [s]','FontSize',v);                  % Texto do eixo x
          ylabel(covariancia2,'Covarância do Erro - KF','FontSize',v);    % Texto do eixo y
-         grid(covariancia2,'on');                                        % Habilita a grade   
+         grid(covariancia2,'on');                                        % Habilita a grade 
+         
                
          ganho_kalman = nexttile;                                        % Gráfico da norma 2 das duas colunas do Ganho de Kalman
          L_1 = norm(L_k(:,1),2);                                         % Norma 2 da primeira coluna de L_k
@@ -493,20 +504,20 @@ switch tipo
              L_3 = [L_3 norm(L_k2(:,i),2)];                              % Acumula a norma das colunas ímpares de L_k2
              L_4 = [L_4 norm(L_k2(:,i+1),2)];                            % Acumula a norma das colunas pares de L_k2
          end
-         p10_a = plot(ganho_kalman,t1,L_1','LineWidth',w)                 % Mostra L1 
-         hold(ganho_kalman,'on');                                         % Retém o gráfico
-         p10_b = plot(ganho_kalman,t1,L_2','LineWidth',w)                 % Mostra L2
-         p10_c = plot(ganho_kalman,t3,L_3','--c','LineWidth',w)           % Mostra L3
-         p10_d = plot(ganho_kalman,t3,L_4','--g','LineWidth',w)           % Mostra L4
+         p10_a = plot(ganho_kalman,t1,L_1','LineWidth',w)                % Mostra L1 
+         hold(ganho_kalman,'on');                                        % Retém o gráfico
+         p10_b = plot(ganho_kalman,t1,L_2','--c','LineWidth',w)          % Mostra L2
+         p10_c = plot(ganho_kalman,t3,L_3','*g','LineWidth',w)           % Mostra L3
+         p10_c.MarkerIndices = 1:400:length(L_3);
+         p10_d = plot(ganho_kalman,t3,L_4','pm','LineWidth',w)           % Mostra L4
+         p10_d.MarkerIndices = 1:450:length(L_4);
          legend('Posição do Carrinho - EKF','Ângulo da Haste - EKF','Posição do Carrinho - KF','Ângulo da Haste - KF','FontSize',v) % Legenda
-         ylabel('Ganho de Kalman - Norma 2','FontSize',v);                % Texto do eixo y
-         xlabel('Tempo - s');                                             % Texto do eixo x
-         grid(ganho_kalman,'on');                                         % Habilita a grade
-         hold(ganho_kalman,'off');                                        % Libera o gráfico
+         ylabel('Ganho de Kalman - Norma 2','FontSize',v);               % Texto do eixo y
+         xlabel('Tempo - s');                                            % Texto do eixo x
+         grid(ganho_kalman,'on');                                        % Habilita a grade
+         hold(ganho_kalman,'off');                                       % Libera o gráfico
 
      otherwise
         disp('Não escolheeu opção alguma')
 end
-   
 end
-
